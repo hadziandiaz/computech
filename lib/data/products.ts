@@ -72,9 +72,16 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductPage
     return { products: [], total: 0, page, perPage, pageCount: 0 };
   }
 
-  let builder = supabase
-    .from("products")
-    .select(PRODUCT_CARD_SELECT, { count: "exact" });
+  // An inner join lets Postgres apply the stock filter before pagination,
+  // so the count and the page contents always agree.
+  const select = query.inStock
+    ? PRODUCT_CARD_SELECT.replace(
+        "inventory:product_inventory(",
+        "inventory:product_inventory!inner(",
+      )
+    : PRODUCT_CARD_SELECT;
+
+  let builder = supabase.from("products").select(select, { count: "exact" });
 
   const status = query.status ?? "active";
   if (status !== "all") builder = builder.eq("status", status);
@@ -82,6 +89,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductPage
   if (query.ids?.length) builder = builder.in("id", query.ids);
   if (query.excludeIds?.length) builder = builder.not("id", "in", `(${query.excludeIds.join(",")})`);
   if (query.featured) builder = builder.eq("is_featured", true);
+  if (query.inStock) builder = builder.gt("inventory.stock", 0);
   if (query.minPrice != null) builder = builder.gte("price", query.minPrice);
   if (query.maxPrice != null) builder = builder.lte("price", query.maxPrice);
 
