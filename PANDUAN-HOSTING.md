@@ -51,6 +51,20 @@ supabase db push
 
 Cek hasilnya di **Table Editor**: tabel `products` harus berisi **78 baris**.
 
+### Kalau SQL pernah dijalankan tapi berhenti dengan error
+
+Setiap file migrasi punya transaksi sendiri, jadi error di tengah jalan bisa
+menyisakan data demo setengah jadi. Bersihkan dulu, lalu ulangi:
+
+1. Buka `supabase/reset_demo_data.sql`, salin seluruh isinya, **Run** di SQL Editor.
+   (Melewati bagian ini juga tidak masalah karena semua seed memakai
+   `on conflict do nothing` — reset hanya memastikan teks lama yang rusak hilang.)
+2. Jalankan ulang `supabase/all_in_one.sql`.
+
+> Jangan menjalankan `reset_demo_data.sql` di toko yang sudah punya pesanan asli:
+> file itu menghapus katalog demo beserta pesanan, keranjang, dan ulasan yang
+> bergantung padanya.
+
 ## 3. Ambil kredensial
 
 **Project Settings -> API** (atau **Data API**):

@@ -1,14 +1,13 @@
-﻿-- =====================================================================
--- COMPUTECH - combined database setup
--- Generated from supabase/migrations/0001..0010, run once on a fresh
--- Supabase project (SQL Editor -> paste -> Run).
 -- =====================================================================
-
+-- COMPUTECH - combined database setup
+-- Generated from supabase/migrations/0001..0010 (UTF-8).
+-- Run once on a fresh Supabase project: SQL Editor -> paste -> Run.
+-- =====================================================================
 
 -- >>> 0001_init.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Core schema
+-- COMPUTECH — Core schema
 -- Migration 0001: enums, tables, constraints, indexes, triggers,
 -- helper functions, order RPCs, Row Level Security, storage policies.
 --
@@ -841,9 +840,11 @@ begin
     return;
   end if;
 
+  -- Qualify with an alias: voucher_id is also an OUT parameter of this
+  -- function, and an unqualified reference raises 42702 at runtime.
   select count(*) into used_by_user
-  from public.voucher_redemptions
-  where voucher_id = v.id and user_id = auth.uid();
+  from public.voucher_redemptions vr
+  where vr.voucher_id = v.id and vr.user_id = auth.uid();
 
   if used_by_user >= v.per_user_limit then
     return query select false, v.id, 0, 'You have already used this voucher.';
@@ -898,7 +899,10 @@ declare
   v_shipping_cost integer := 0;
   v_total integer := 0;
   v_ship public.shipping_methods%rowtype;
-  v_voucher_result record;
+  v_voucher_valid boolean := false;
+  v_voucher_id uuid;
+  v_voucher_discount integer := 0;
+  v_voucher_message text;
   v_order_id uuid;
   v_order_number text;
   v_item_id uuid;
@@ -964,11 +968,13 @@ begin
   end if;
 
   if p_voucher_code is not null and trim(p_voucher_code) <> '' then
-    select * into v_voucher_result from public.voucher_quote(p_voucher_code, v_subtotal);
-    if not v_voucher_result.valid then
-      raise exception '%', v_voucher_result.message;
+    select q.valid, q.voucher_id, q.discount, q.message
+      into v_voucher_valid, v_voucher_id, v_voucher_discount, v_voucher_message
+    from public.voucher_quote(p_voucher_code, v_subtotal) q;
+    if not v_voucher_valid then
+      raise exception '%', v_voucher_message;
     end if;
-    v_discount := v_voucher_result.discount;
+    v_discount := v_voucher_discount;
   end if;
 
   -- Free shipping applies when a free-shipping promotion qualifies or when the
@@ -1008,8 +1014,8 @@ begin
     shipping_address, notes
   ) values (
     v_order_number, v_user, 'pending', v_subtotal, v_discount, v_shipping_cost, v_total,
-    case when v_voucher_result.valid then v_voucher_result.voucher_id else null end,
-    case when v_voucher_result.valid then upper(trim(p_voucher_code)) else null end,
+    case when v_voucher_valid then v_voucher_id else null end,
+    case when v_voucher_valid then upper(trim(p_voucher_code)) else null end,
     coalesce(nullif(trim(v_profile.full_name), ''), v_address_name),
     coalesce(v_profile.email, v_email, ''),
     coalesce(nullif(trim(v_profile.phone), ''), v_address_phone),
@@ -1075,10 +1081,10 @@ begin
   insert into public.shipments (order_id, courier, service, status)
   values (v_order_id, v_ship.courier, v_ship.name, 'pending');
 
-  if v_voucher_result.valid then
-    update public.vouchers set used_count = used_count + 1 where id = v_voucher_result.voucher_id;
+  if v_voucher_valid then
+    update public.vouchers set used_count = used_count + 1 where id = v_voucher_id;
     insert into public.voucher_redemptions (voucher_id, user_id, order_id, discount)
-    values (v_voucher_result.voucher_id, v_user, v_order_id, v_discount);
+    values (v_voucher_id, v_user, v_order_id, v_discount);
   end if;
 
   update public.promotions pr
@@ -1734,11 +1740,10 @@ create policy computect_storage_avatar_delete on storage.objects for delete to a
 
 commit;
 
-
 -- >>> 0002_seed_categories_brands.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0002: categories and brands
+-- COMPUTECH — Demo seed 0002: categories and brands
 -- Run after 0001_init.sql.
 -- =====================================================================
 
@@ -1846,11 +1851,10 @@ on conflict (id) do nothing;
 
 commit;
 
-
 -- >>> 0003_seed_products_computers.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0003: computers, laptops and monitors
+-- COMPUTECH — Demo seed 0003: computers, laptops and monitors
 -- =====================================================================
 
 begin;
@@ -1908,11 +1912,10 @@ on conflict (id) do nothing;
 
 commit;
 
-
 -- >>> 0004_seed_products_components.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0004: PC components
+-- COMPUTECH — Demo seed 0004: PC components
 -- =====================================================================
 
 begin;
@@ -1967,11 +1970,11 @@ insert into public.products (id, name, slug, sku, brand_id, category_id, short_d
  'A proven 1080p GPU with a heavy-duty cooler. The 12 GB frame buffer is helpful for texture-heavy games and entry-level creative workloads.',
  4799000, null, 36, 'manufacturer', 'ASUS Indonesia', 1100, 'active', false, true, 51),
 ('10000000-0000-4000-8000-000000000025', 'Corsair Vengeance LPX 16GB DDR4-3200', 'corsair-vengeance-lpx-16gb-ddr4-3200', 'CT-RAM-001', '02000000-0000-4000-8000-00000000000c', '01000000-0000-4000-8000-000000000204',
- '16 GB (2Ã—8 GB) low-profile DDR4 memory kit.',
+ '16 GB (2×8 GB) low-profile DDR4 memory kit.',
  'A dual-channel DDR4 kit for Intel B760 and older platforms. The low-profile heat spreaders fit under large air coolers.',
  749000, 699000, 60, 'manufacturer', 'Corsair Indonesia', 100, 'active', true, true, 200),
 ('10000000-0000-4000-8000-000000000026', 'Kingston Fury Beast 32GB DDR5-6000', 'kingston-fury-beast-32gb-ddr5-6000', 'CT-RAM-002', '02000000-0000-4000-8000-00000000000d', '01000000-0000-4000-8000-000000000204',
- '32 GB (2Ã—16 GB) DDR5-6000 memory kit for AM5 and LGA1700.',
+ '32 GB (2×16 GB) DDR5-6000 memory kit for AM5 and LGA1700.',
  'A high-capacity DDR5 kit for gaming, editing and virtual machines. EXPO/XMP profiles simplify reaching rated speeds on supported boards.',
  1649000, 1499000, 60, 'manufacturer', 'Kingston Indonesia', 120, 'active', true, true, 160),
 ('10000000-0000-4000-8000-000000000027', 'TeamGroup Elite 8GB DDR4-3200', 'teamgroup-elite-8gb-ddr4-3200', 'CT-RAM-003', '02000000-0000-4000-8000-00000000001f', '01000000-0000-4000-8000-000000000204',
@@ -2046,11 +2049,10 @@ on conflict (id) do nothing;
 
 commit;
 
-
 -- >>> 0005_seed_products_networking.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0005: networking equipment, tools and materials
+-- COMPUTECH — Demo seed 0005: networking equipment, tools and materials
 -- =====================================================================
 
 begin;
@@ -2160,11 +2162,10 @@ on conflict (id) do nothing;
 
 commit;
 
-
 -- >>> 0006_seed_products_accessories.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0006: accessories and peripherals
+-- COMPUTECH — Demo seed 0006: accessories and peripherals
 -- =====================================================================
 
 begin;
@@ -2199,7 +2200,7 @@ insert into public.products (id, name, slug, sku, brand_id, category_id, short_d
  'An aluminium stand with adjustable height and angle. Improves airflow under the laptop and raises the screen to a comfortable level.',
  299000, 249000, 12, 'manufacturer', 'Baseus Indonesia', 700, 'active', false, true, 120),
 ('10000000-0000-4000-8000-000000000076', 'DeepCool N8 Cooling Pad', 'deepcool-n8-cooling-pad', 'CT-ACC-008', '02000000-0000-4000-8000-00000000001c', '01000000-0000-4000-8000-000000000509',
- 'Cooling pad with three adjustable fans for 15â€“17-inch laptops.',
+ 'Cooling pad with three adjustable fans for 15–17-inch laptops.',
  'A USB-powered cooling pad for warmer laptops. Fan speed and tilt are adjustable for different desk setups.',
  349000, null, 12, 'manufacturer', 'DeepCool Indonesia', 900, 'active', false, true, 60),
 ('10000000-0000-4000-8000-000000000077', 'Ugreen USB-C to DisplayPort Adapter', 'ugreen-usb-c-to-displayport-adapter', 'CT-ACC-009', '02000000-0000-4000-8000-00000000001a', '01000000-0000-4000-8000-000000000507',
@@ -2214,11 +2215,10 @@ on conflict (id) do nothing;
 
 commit;
 
-
 -- >>> 0007_seed_images_inventory.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0007: product images and inventory
+-- COMPUTECH — Demo seed 0007: product images and inventory
 -- =====================================================================
 
 begin;
@@ -2264,7 +2264,7 @@ select
       else 'https://images.unsplash.com/photo-1601737487795-dab272f52420?auto=format&fit=crop&w=1400&q=80'
     end
   ),
-  p.name || ' â€” demo product image',
+  p.name || ' — demo product image',
   0,
   true
 from public.products p
@@ -2383,11 +2383,10 @@ where p.is_demo
 
 commit;
 
-
 -- >>> 0008_seed_specifications.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0008: product specifications
+-- COMPUTECH — Demo seed 0008: product specifications
 -- =====================================================================
 
 begin;
@@ -2468,17 +2467,17 @@ from (values
   ('CT-MINI-001', 'Processor', 'AMD Ryzen 5 5560U', 10),
   ('CT-MINI-001', 'Memory', '16GB DDR4', 11),
   ('CT-MINI-001', 'Storage', '512GB NVMe SSD', 12),
-  ('CT-MINI-001', 'Ports', '2Ã— HDMI, 4Ã— USB, RJ45', 13),
+  ('CT-MINI-001', 'Ports', '2× HDMI, 4× USB, RJ45', 13),
   ('CT-AIO-001', 'Processor', 'AMD Ryzen 5 7520U', 10),
   ('CT-AIO-001', 'Memory', '16GB LPDDR5', 11),
   ('CT-AIO-001', 'Storage', '512GB NVMe SSD', 12),
   ('CT-AIO-001', 'Display', '23.8" FHD IPS', 13),
   ('CT-MON-001', 'Panel', '27" QHD IPS', 10),
-  ('CT-MON-001', 'Resolution', '2560 Ã— 1440', 11),
+  ('CT-MON-001', 'Resolution', '2560 × 1440', 11),
   ('CT-MON-001', 'Refresh rate', '180Hz', 12),
-  ('CT-MON-001', 'Ports', '2Ã— HDMI, 1Ã— DisplayPort', 13),
+  ('CT-MON-001', 'Ports', '2× HDMI, 1× DisplayPort', 13),
   ('CT-MON-002', 'Panel', '27" QHD IPS Black', 10),
-  ('CT-MON-002', 'Resolution', '2560 Ã— 1440', 11),
+  ('CT-MON-002', 'Resolution', '2560 × 1440', 11),
   ('CT-MON-002', 'Colour coverage', '98% DCI-P3', 12),
   ('CT-MON-002', 'USB-C', '90W power delivery', 13),
   ('CT-CPU-001', 'Socket', 'LGA1700', 10),
@@ -2501,49 +2500,49 @@ from (values
   ('CT-MB-001', 'Chipset', 'Intel B760', 11),
   ('CT-MB-001', 'Memory', 'DDR4, 2 slots, up to 64GB', 12),
   ('CT-MB-001', 'Form factor', 'Micro-ATX', 13),
-  ('CT-MB-001', 'Storage', '2Ã— M.2, 4Ã— SATA', 14),
+  ('CT-MB-001', 'Storage', '2× M.2, 4× SATA', 14),
   ('CT-MB-002', 'Socket', 'AM5', 10),
   ('CT-MB-002', 'Chipset', 'AMD B650', 11),
   ('CT-MB-002', 'Memory', 'DDR5, 4 slots, up to 128GB', 12),
   ('CT-MB-002', 'Form factor', 'Micro-ATX', 13),
-  ('CT-MB-002', 'Storage', '2Ã— M.2, 4Ã— SATA', 14),
+  ('CT-MB-002', 'Storage', '2× M.2, 4× SATA', 14),
   ('CT-MB-003', 'Socket', 'LGA1700', 10),
   ('CT-MB-003', 'Chipset', 'Intel Z790', 11),
   ('CT-MB-003', 'Memory', 'DDR5, 4 slots, up to 192GB', 12),
   ('CT-MB-003', 'Form factor', 'ATX', 13),
-  ('CT-MB-003', 'Storage', '4Ã— M.2, 6Ã— SATA', 14),
+  ('CT-MB-003', 'Storage', '4× M.2, 6× SATA', 14),
   ('CT-MB-004', 'Socket', 'AM5', 10),
   ('CT-MB-004', 'Chipset', 'AMD A620', 11),
   ('CT-MB-004', 'Memory', 'DDR5, 2 slots, up to 96GB', 12),
   ('CT-MB-004', 'Form factor', 'Micro-ATX', 13),
-  ('CT-MB-004', 'Storage', '1Ã— M.2, 2Ã— SATA', 14),
+  ('CT-MB-004', 'Storage', '1× M.2, 2× SATA', 14),
   ('CT-GPU-001', 'Memory', '8GB GDDR6', 10),
   ('CT-GPU-001', 'Card length', '240mm', 11),
   ('CT-GPU-001', 'Power draw', '115W', 12),
-  ('CT-GPU-001', 'Power connector', '1Ã— 8-pin', 13),
+  ('CT-GPU-001', 'Power connector', '1× 8-pin', 13),
   ('CT-GPU-002', 'Memory', '12GB GDDR6X', 10),
   ('CT-GPU-002', 'Card length', '308mm', 11),
   ('CT-GPU-002', 'Power draw', '220W', 12),
-  ('CT-GPU-002', 'Power connector', '1Ã— 16-pin', 13),
+  ('CT-GPU-002', 'Power connector', '1× 16-pin', 13),
   ('CT-GPU-003', 'Memory', '8GB GDDR6', 10),
   ('CT-GPU-003', 'Card length', '240mm', 11),
   ('CT-GPU-003', 'Power draw', '165W', 12),
-  ('CT-GPU-003', 'Power connector', '1Ã— 8-pin', 13),
+  ('CT-GPU-003', 'Power connector', '1× 8-pin', 13),
   ('CT-GPU-004', 'Memory', '12GB GDDR6', 10),
   ('CT-GPU-004', 'Card length', '301mm', 11),
   ('CT-GPU-004', 'Power draw', '170W', 12),
-  ('CT-GPU-004', 'Power connector', '1Ã— 8-pin', 13),
+  ('CT-GPU-004', 'Power connector', '1× 8-pin', 13),
   ('CT-RAM-001', 'Memory type', 'DDR4', 10),
-  ('CT-RAM-001', 'Capacity', '16GB (2Ã— 8GB)', 11),
+  ('CT-RAM-001', 'Capacity', '16GB (2× 8GB)', 11),
   ('CT-RAM-001', 'Speed', '3200 MHz', 12),
   ('CT-RAM-002', 'Memory type', 'DDR5', 10),
-  ('CT-RAM-002', 'Capacity', '32GB (2Ã— 16GB)', 11),
+  ('CT-RAM-002', 'Capacity', '32GB (2× 16GB)', 11),
   ('CT-RAM-002', 'Speed', '6000 MHz', 12),
   ('CT-RAM-003', 'Memory type', 'DDR4', 10),
-  ('CT-RAM-003', 'Capacity', '8GB (1Ã— 8GB)', 11),
+  ('CT-RAM-003', 'Capacity', '8GB (1× 8GB)', 11),
   ('CT-RAM-003', 'Speed', '3200 MHz', 12),
   ('CT-RAM-004', 'Memory type', 'DDR5', 10),
-  ('CT-RAM-004', 'Capacity', '16GB (1Ã— 16GB)', 11),
+  ('CT-RAM-004', 'Capacity', '16GB (1× 16GB)', 11),
   ('CT-RAM-004', 'Speed', '5600 MHz', 12),
   ('CT-SSD-001', 'Interface', 'PCIe 4.0 NVMe', 10),
   ('CT-SSD-001', 'Capacity', '1TB', 11),
@@ -2563,15 +2562,15 @@ from (values
   ('CT-PSU-001', 'Wattage', '550W', 10),
   ('CT-PSU-001', 'Efficiency', '80+ Gold', 11),
   ('CT-PSU-001', 'Modularity', 'Fully modular', 12),
-  ('CT-PSU-001', 'PCIe connectors', '2Ã— 8-pin', 13),
+  ('CT-PSU-001', 'PCIe connectors', '2× 8-pin', 13),
   ('CT-PSU-002', 'Wattage', '650W', 10),
   ('CT-PSU-002', 'Efficiency', '80+ Gold', 11),
   ('CT-PSU-002', 'Modularity', 'Fully modular', 12),
-  ('CT-PSU-002', 'PCIe connectors', '3Ã— 8-pin, 1Ã— 16-pin', 13),
+  ('CT-PSU-002', 'PCIe connectors', '3× 8-pin, 1× 16-pin', 13),
   ('CT-PSU-003', 'Wattage', '750W', 10),
   ('CT-PSU-003', 'Efficiency', '80+ Gold', 11),
   ('CT-PSU-003', 'Modularity', 'Semi-modular', 12),
-  ('CT-PSU-003', 'PCIe connectors', '4Ã— 8-pin, 1Ã— 16-pin', 13),
+  ('CT-PSU-003', 'PCIe connectors', '4× 8-pin, 1× 16-pin', 13),
   ('CT-CASE-001', 'Form factors', 'Micro-ATX, Mini-ITX', 10),
   ('CT-CASE-001', 'Max GPU length', '320mm', 11),
   ('CT-CASE-001', 'Max cooler height', '165mm', 12),
@@ -2599,22 +2598,22 @@ from (values
   ('CT-FAN-002', 'Pack', '1 fan', 11),
   ('CT-FAN-002', 'Connector', '4-pin PWM', 12),
   ('CT-NET-001', 'Wi-Fi standard', 'Wi-Fi 6 (AX3000)', 10),
-  ('CT-NET-001', 'Ports', '1Ã— WAN, 4Ã— LAN gigabit', 11),
+  ('CT-NET-001', 'Ports', '1× WAN, 4× LAN gigabit', 11),
   ('CT-NET-001', 'Features', 'OneMesh, OFDMA, MU-MIMO', 12),
   ('CT-NET-002', 'Wi-Fi standard', 'Wi-Fi 6', 10),
-  ('CT-NET-002', 'Ports', '5Ã— gigabit Ethernet', 11),
+  ('CT-NET-002', 'Ports', '5× gigabit Ethernet', 11),
   ('CT-NET-002', 'Management', 'RouterOS', 12),
   ('CT-NET-003', 'Wi-Fi standard', 'Wi-Fi 6 (AX3000)', 10),
-  ('CT-NET-003', 'Ports', '1Ã— WAN, 4Ã— LAN gigabit', 11),
+  ('CT-NET-003', 'Ports', '1× WAN, 4× LAN gigabit', 11),
   ('CT-NET-003', 'Features', 'AiMesh, AiProtection', 12),
-  ('CT-NET-004', 'Ports', '8Ã— gigabit', 10),
+  ('CT-NET-004', 'Ports', '8× gigabit', 10),
   ('CT-NET-004', 'Management', 'Unmanaged', 11),
   ('CT-NET-004', 'Case', 'Fanless metal', 12),
-  ('CT-NET-005', 'Ports', '24Ã— gigabit + 2Ã— 10G SFP+', 10),
+  ('CT-NET-005', 'Ports', '24× gigabit + 2× 10G SFP+', 10),
   ('CT-NET-005', 'Management', 'SwOS / RouterOS', 11),
   ('CT-NET-005', 'Form factor', '1U rackmount', 12),
-  ('CT-NET-006', 'Ports', '16Ã— gigabit PoE+', 10),
-  ('CT-NET-006', 'Uplinks', '2Ã— SFP', 11),
+  ('CT-NET-006', 'Ports', '16× gigabit PoE+', 10),
+  ('CT-NET-006', 'Uplinks', '2× SFP', 11),
   ('CT-NET-006', 'PoE budget', '192W', 12),
   ('CT-NET-007', 'Wi-Fi standard', 'Wi-Fi 6', 10),
   ('CT-NET-007', 'Management', 'UniFi controller', 11),
@@ -2623,10 +2622,10 @@ from (values
   ('CT-NET-008', 'Management', 'Omada controller', 11),
   ('CT-NET-008', 'Power', '802.3af/at PoE', 12),
   ('CT-NET-009', 'Type', 'GPON ONT', 10),
-  ('CT-NET-009', 'Ports', '1Ã— GPON, 1Ã— LAN, Wi-Fi', 11),
+  ('CT-NET-009', 'Ports', '1× GPON, 1× LAN, Wi-Fi', 11),
   ('CT-NET-009', 'ISP profile', 'Provider-dependent', 12),
   ('CT-NET-010', 'Type', 'GPON ONT', 10),
-  ('CT-NET-010', 'Ports', '1Ã— GPON, 4Ã— LAN, dual-band Wi-Fi', 11),
+  ('CT-NET-010', 'Ports', '1× GPON, 4× LAN, dual-band Wi-Fi', 11),
   ('CT-NET-010', 'ISP profile', 'Provider-dependent', 12),
   ('CT-NET-011', 'Interface', 'USB 3.0 to gigabit Ethernet', 10),
   ('CT-NET-011', 'Extras', '3-port USB hub', 11),
@@ -2634,7 +2633,7 @@ from (values
   ('CT-NET-012', 'Wi-Fi standard', 'AC1300', 10),
   ('CT-NET-012', 'Interface', 'USB 3.0', 11),
   ('CT-NET-012', 'Antenna', 'High-gain external', 12),
-  ('CT-NET-013', 'Ports', '7Ã— gigabit, 1Ã— 2.5G, 1Ã— 10G SFP+', 10),
+  ('CT-NET-013', 'Ports', '7× gigabit, 1× 2.5G, 1× 10G SFP+', 10),
   ('CT-NET-013', 'Management', 'RouterOS', 11),
   ('CT-NET-013', 'Power', 'PoE out on one port', 12),
   ('CT-TOOL-001', 'Type', 'Ratchet crimping tool', 10),
@@ -2694,7 +2693,7 @@ from (values
   ('CT-ACC-007', 'Adjustable', 'Height and angle', 11),
   ('CT-ACC-007', 'Compatibility', 'Up to 17-inch laptops', 12),
   ('CT-ACC-008', 'Fans', '3 adjustable', 10),
-  ('CT-ACC-008', 'Size support', '15â€“17-inch laptops', 11),
+  ('CT-ACC-008', 'Size support', '15–17-inch laptops', 11),
   ('CT-ACC-008', 'Power', 'USB powered', 12),
   ('CT-ACC-009', 'Input', 'USB-C', 10),
   ('CT-ACC-009', 'Output', 'DisplayPort 1.4', 11),
@@ -2711,11 +2710,10 @@ where not exists (
 
 commit;
 
-
 -- >>> 0009_seed_pc_components.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0009: PC Builder specifications and rules
+-- COMPUTECH — Demo seed 0009: PC Builder specifications and rules
 -- Populates pc_component_specs for every demo PC component and stores
 -- a few explicit compatibility rules for demonstration and moderation.
 -- =====================================================================
@@ -2736,143 +2734,143 @@ insert into public.pc_component_specs (
 ('10000000-0000-4000-8000-000000000013', 'cpu', 'LGA1700', null, 65, 10, false,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  70, 'Intel Core i5-14400F â€” 10 cores, 65 W base power.'),
+  70, 'Intel Core i5-14400F — 10 cores, 65 W base power.'),
 ('10000000-0000-4000-8000-000000000014', 'cpu', 'LGA1700', null, 125, 20, true,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  92, 'Intel Core i7-14700K â€” 20 cores, 125 W base power.'),
+  92, 'Intel Core i7-14700K — 20 cores, 125 W base power.'),
 ('10000000-0000-4000-8000-000000000015', 'cpu', 'AM5', null, 65, 6, true,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  72, 'AMD Ryzen 5 7600 â€” 6 cores, 65 W TDP, integrated Radeon graphics.'),
+  72, 'AMD Ryzen 5 7600 — 6 cores, 65 W TDP, integrated Radeon graphics.'),
 ('10000000-0000-4000-8000-000000000016', 'cpu', 'AM5', null, 120, 8, true,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  88, 'AMD Ryzen 7 7800X3D â€” 8 cores, 120 W TDP, 3D V-Cache.'),
+  88, 'AMD Ryzen 7 7800X3D — 8 cores, 120 W TDP, 3D V-Cache.'),
 
 -- Motherboards
 ('10000000-0000-4000-8000-000000000017', 'motherboard', 'LGA1700', 'Intel B760', null, null, null,
   'DDR4', 2, 64, 'Micro-ATX', array['Micro-ATX','Mini-ITX'], 2, 4, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  58, 'ASUS Prime B760M-K DDR4 â€” two DDR4 slots, dual M.2.'),
+  58, 'ASUS Prime B760M-K DDR4 — two DDR4 slots, dual M.2.'),
 ('10000000-0000-4000-8000-000000000018', 'motherboard', 'AM5', 'AMD B650', null, null, null,
   'DDR5', 4, 128, 'Micro-ATX', array['Micro-ATX','Mini-ITX'], 2, 4, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  68, 'MSI PRO B650M-A WIFI â€” four DDR5 slots, Wi-Fi 6E.'),
+  68, 'MSI PRO B650M-A WIFI — four DDR5 slots, Wi-Fi 6E.'),
 ('10000000-0000-4000-8000-000000000019', 'motherboard', 'LGA1700', 'Intel Z790', null, null, null,
   'DDR5', 4, 192, 'ATX', array['ATX','Micro-ATX','Mini-ITX'], 4, 6, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  84, 'Gigabyte Z790 AORUS ELITE AX DDR5 â€” four M.2 slots, strong VRM.'),
+  84, 'Gigabyte Z790 AORUS ELITE AX DDR5 — four M.2 slots, strong VRM.'),
 ('10000000-0000-4000-8000-000000000020', 'motherboard', 'AM5', 'AMD A620', null, null, null,
   'DDR5', 2, 96, 'Micro-ATX', array['Micro-ATX','Mini-ITX'], 1, 2, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  48, 'ASRock A620M-HDV/M.2+ â€” entry AM5 board with one M.2 slot.'),
+  48, 'ASRock A620M-HDV/M.2+ — entry AM5 board with one M.2 slot.'),
 
 -- Graphics cards
 ('10000000-0000-4000-8000-000000000021', 'gpu', null, null, null, null, null,
   null, null, null, null, null, null, null, 240, 115, '1x 8-pin',
   450, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  55, 'ASUS Dual RTX 4060 OC â€” 240 mm card, 115 W board power.'),
+  55, 'ASUS Dual RTX 4060 OC — 240 mm card, 115 W board power.'),
 ('10000000-0000-4000-8000-000000000022', 'gpu', null, null, null, null, null,
   null, null, null, null, null, null, null, 308, 220, '1x 16-pin',
   650, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  78, 'MSI RTX 4070 SUPER Ventus 3X â€” 308 mm card, 220 W board power.'),
+  78, 'MSI RTX 4070 SUPER Ventus 3X — 308 mm card, 220 W board power.'),
 ('10000000-0000-4000-8000-000000000023', 'gpu', null, null, null, null, null,
   null, null, null, null, null, null, null, 240, 165, '1x 8-pin',
   500, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  50, 'Gigabyte Radeon RX 7600 Gaming OC â€” 240 mm card, 165 W board power.'),
+  50, 'Gigabyte Radeon RX 7600 Gaming OC — 240 mm card, 165 W board power.'),
 ('10000000-0000-4000-8000-000000000024', 'gpu', null, null, null, null, null,
   null, null, null, null, null, null, null, 301, 170, '1x 8-pin',
   550, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  42, 'ASUS TUF RTX 3060 V2 â€” 301 mm card, 170 W board power.'),
+  42, 'ASUS TUF RTX 3060 V2 — 301 mm card, 170 W board power.'),
 
 -- Memory kits
 ('10000000-0000-4000-8000-000000000025', 'ram', null, null, null, null, null,
   'DDR4', null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, 2, 16, 3200, null, null,
-  30, 'Corsair Vengeance LPX 16 GB DDR4-3200 â€” two 8 GB modules.'),
+  null, null, null, null, null, null, null, null, 2, 16, 3200, null, null,
+  30, 'Corsair Vengeance LPX 16 GB DDR4-3200 — two 8 GB modules.'),
 ('10000000-0000-4000-8000-000000000026', 'ram', null, null, null, null, null,
   'DDR5', null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, 2, 32, 6000, null, null,
-  45, 'Kingston Fury Beast 32 GB DDR5-6000 â€” two 16 GB modules.'),
+  null, null, null, null, null, null, null, null, 2, 32, 6000, null, null,
+  45, 'Kingston Fury Beast 32 GB DDR5-6000 — two 16 GB modules.'),
 ('10000000-0000-4000-8000-000000000027', 'ram', null, null, null, null, null,
   'DDR4', null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, 1, 8, 3200, null, null,
-  18, 'TeamGroup Elite 8 GB DDR4-3200 â€” single module.'),
+  null, null, null, null, null, null, null, null, 1, 8, 3200, null, null,
+  18, 'TeamGroup Elite 8 GB DDR4-3200 — single module.'),
 ('10000000-0000-4000-8000-000000000028', 'ram', null, null, null, null, null,
   'DDR5', null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, 1, 16, 5600, null, null,
-  26, 'Samsung 16 GB DDR5-5600 â€” single module.'),
+  null, null, null, null, null, null, null, null, 1, 16, 5600, null, null,
+  26, 'Samsung 16 GB DDR5-5600 — single module.'),
 
 -- Storage
 ('10000000-0000-4000-8000-000000000029', 'storage', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null, null,
-  'M.2 NVMe PCIe 4.0', 1000, 60, 'Samsung 990 PRO 1 TB â€” PCIe 4.0 NVMe.'),
+  null, null, null, null, null, null, null, null, null, null, null, 
+  'M.2 NVMe PCIe 4.0', 1000, 60, 'Samsung 990 PRO 1 TB — PCIe 4.0 NVMe.'),
 ('10000000-0000-4000-8000-000000000030', 'storage', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null, null,
-  'M.2 NVMe PCIe 3.0', 500, 38, 'Kingston NV3 500 GB â€” PCIe 3.0 NVMe.'),
+  null, null, null, null, null, null, null, null, null, null, null, 
+  'M.2 NVMe PCIe 3.0', 500, 38, 'Kingston NV3 500 GB — PCIe 3.0 NVMe.'),
 ('10000000-0000-4000-8000-000000000031', 'storage', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null, null,
-  'SATA III 2.5-inch', 1000, 30, 'Samsung 870 EVO 1 TB â€” SATA III 2.5-inch.'),
+  null, null, null, null, null, null, null, null, null, null, null, 
+  'SATA III 2.5-inch', 1000, 30, 'Samsung 870 EVO 1 TB — SATA III 2.5-inch.'),
 ('10000000-0000-4000-8000-000000000032', 'storage', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null, null,
-  'M.2 NVMe PCIe 4.0', 2000, 72, 'WD Black SN850X 2 TB â€” PCIe 4.0 NVMe.'),
+  null, null, null, null, null, null, null, null, null, null, null, 
+  'M.2 NVMe PCIe 4.0', 2000, 72, 'WD Black SN850X 2 TB — PCIe 4.0 NVMe.'),
 ('10000000-0000-4000-8000-000000000033', 'storage', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null, null,
-  'SATA III 3.5-inch', 2000, 14, 'Seagate Barracuda 2 TB â€” 7200 RPM hard drive.'),
+  null, null, null, null, null, null, null, null, null, null, null, 
+  'SATA III 3.5-inch', 2000, 14, 'Seagate Barracuda 2 TB — 7200 RPM hard drive.'),
 
 -- Power supplies
 ('10000000-0000-4000-8000-000000000034', 'psu', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null,
   550, '80+ Gold', 2, 0, null, null, null, null, null, null, null, null, null, null,
-  null, 45, 'Seasonic Focus GX-550 â€” 550 W, two 8-pin PCIe outputs.'),
+  null, 45, 'Seasonic Focus GX-550 — 550 W, two 8-pin PCIe outputs.'),
 ('10000000-0000-4000-8000-000000000035', 'psu', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null,
   650, '80+ Gold', 3, 1, null, null, null, null, null, null, null, null, null, null,
-  null, 60, 'Corsair RM650e â€” 650 W, three 8-pin and one 16-pin PCIe output.'),
+  null, 60, 'Corsair RM650e — 650 W, three 8-pin and one 16-pin PCIe output.'),
 ('10000000-0000-4000-8000-000000000036', 'psu', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null,
   750, '80+ Gold', 4, 1, null, null, null, null, null, null, null, null, null, null,
-  null, 72, 'Cooler Master MWE 750 V2 â€” 750 W, four 8-pin and one 16-pin output.'),
+  null, 72, 'Cooler Master MWE 750 V2 — 750 W, four 8-pin and one 16-pin output.'),
 
 -- Cases
 ('10000000-0000-4000-8000-000000000037', 'case', null, null, null, null, null,
   null, null, null, null, array['Micro-ATX','Mini-ITX'], null, null, null, null, null,
   null, null, null, null, null, 320, 165, array['120mm','140mm'], null, null, null, null, null, null,
-  null, null, 50, 'DeepCool CH370 â€” micro-ATX case, 320 mm GPU, 165 mm cooler.'),
+  null, null, 50, 'DeepCool CH370 — micro-ATX case, 320 mm GPU, 165 mm cooler.'),
 ('10000000-0000-4000-8000-000000000038', 'case', null, null, null, null, null,
   null, null, null, null, array['ATX','Micro-ATX','Mini-ITX'], null, null, null, null, null,
   null, null, null, null, null, 360, 170, array['120mm','140mm'], null, null, null, null, null, null,
-  null, null, 65, 'Corsair 4000D Airflow â€” ATX mid-tower, 360 mm GPU, 170 mm cooler.'),
+  null, null, 65, 'Corsair 4000D Airflow — ATX mid-tower, 360 mm GPU, 170 mm cooler.'),
 ('10000000-0000-4000-8000-000000000039', 'case', null, null, null, null, null,
   null, null, null, null, array['ATX','Micro-ATX','Mini-ITX'], null, null, null, null, null,
   null, null, null, null, null, 410, 165, array['120mm','140mm'], null, null, null, null, null, null,
-  null, null, 68, 'Cooler Master TD500 Mesh â€” ATX tower, 410 mm GPU, 165 mm cooler.'),
+  null, null, 68, 'Cooler Master TD500 Mesh — ATX tower, 410 mm GPU, 165 mm cooler.'),
 
 -- CPU coolers
 ('10000000-0000-4000-8000-000000000040', 'cooler', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  165, null, 155, array['LGA1700','AM5','AM4'], 180, null, null, null, null, null, null,
-  48, 'DeepCool AK400 â€” 155 mm tall, rated to 180 W.'),
+  165, null, 155, array['LGA1700','AM5','AM4'], 180, null, null, null, null, null, 
+  48, 'DeepCool AK400 — 155 mm tall, rated to 180 W.'),
 ('10000000-0000-4000-8000-000000000041', 'cooler', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, 55, array['LGA1700','AM5','AM4'], 250, null, null, null, null, null, null,
-  66, 'Cooler Master ML240L Core â€” 240 mm liquid cooler, rated to 250 W.'),
+  null, null, 55, array['LGA1700','AM5','AM4'], 250, null, null, null, null, null, 
+  66, 'Cooler Master ML240L Core — 240 mm liquid cooler, rated to 250 W.'),
 
 -- Case fans
 ('10000000-0000-4000-8000-000000000042', 'case_fan', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null,
-  22, '3 Ã— 120mm PWM fans with daisy-chain cables.'),
+  null, null, null, null, null, null, null, null, null, null, 
+  22, '3 × 120mm PWM fans with daisy-chain cables.'),
 ('10000000-0000-4000-8000-000000000043', 'case_fan', null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null, null,
-  20, '1 Ã— 140mm PWM pressure-optimised fan.')
+  null, null, null, null, null, null, null, null, null, null, 
+  20, '1 × 140mm PWM pressure-optimised fan.')
 on conflict (product_id) do nothing;
 
 -- Explicit compatibility rules. The runtime engine derives most checks from
@@ -2904,14 +2902,13 @@ on conflict (component_a_product_id, component_b_product_id) do nothing;
 
 commit;
 
-
 -- >>> 0010_seed_merchandising.sql >>>
 
 -- =====================================================================
--- COMPUTECH â€” Demo seed 0010: merchandising, shipping and reviews
+-- COMPUTECH — Demo seed 0010: merchandising, shipping and reviews
 -- Promotions, vouchers, shipping methods, site settings and a set of
 -- clearly labelled demo reviews. Contact details are intentionally empty:
--- configure them in Admin â†’ Settings or via environment variables.
+-- configure them in Admin → Settings or via environment variables.
 -- =====================================================================
 
 begin;
@@ -3008,7 +3005,7 @@ insert into public.site_settings (key, value) values
 ('store_email', ''),
 ('store_whatsapp', ''),
 ('store_address', ''),
-('store_hours', 'Monday to Saturday, 09:00â€“18:00 WIB'),
+('store_hours', 'Monday to Saturday, 09:00–18:00 WIB'),
 ('announcement_text', 'Demo storefront: catalog and stock data are seeded examples. Configure credentials and contact details before going live.'),
 ('announcement_link', '/about'),
 ('free_shipping_min', '500000'),

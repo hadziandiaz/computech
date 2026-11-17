@@ -832,9 +832,11 @@ begin
     return;
   end if;
 
+  -- Qualify with an alias: voucher_id is also an OUT parameter of this
+  -- function, and an unqualified reference raises 42702 at runtime.
   select count(*) into used_by_user
-  from public.voucher_redemptions
-  where voucher_id = v.id and user_id = auth.uid();
+  from public.voucher_redemptions vr
+  where vr.voucher_id = v.id and vr.user_id = auth.uid();
 
   if used_by_user >= v.per_user_limit then
     return query select false, v.id, 0, 'You have already used this voucher.';
@@ -889,7 +891,10 @@ declare
   v_shipping_cost integer := 0;
   v_total integer := 0;
   v_ship public.shipping_methods%rowtype;
-  v_voucher_result record;
+  v_voucher_valid boolean := false;
+  v_voucher_id uuid;
+  v_voucher_discount integer := 0;
+  v_voucher_message text;
   v_order_id uuid;
   v_order_number text;
   v_item_id uuid;
@@ -955,11 +960,13 @@ begin
   end if;
 
   if p_voucher_code is not null and trim(p_voucher_code) <> '' then
-    select * into v_voucher_result from public.voucher_quote(p_voucher_code, v_subtotal);
-    if not v_voucher_result.valid then
-      raise exception '%', v_voucher_result.message;
+    select q.valid, q.voucher_id, q.discount, q.message
+      into v_voucher_valid, v_voucher_id, v_voucher_discount, v_voucher_message
+    from public.voucher_quote(p_voucher_code, v_subtotal) q;
+    if not v_voucher_valid then
+      raise exception '%', v_voucher_message;
     end if;
-    v_discount := v_voucher_result.discount;
+    v_discount := v_voucher_discount;
   end if;
 
   -- Free shipping applies when a free-shipping promotion qualifies or when the
@@ -999,8 +1006,8 @@ begin
     shipping_address, notes
   ) values (
     v_order_number, v_user, 'pending', v_subtotal, v_discount, v_shipping_cost, v_total,
-    case when v_voucher_result.valid then v_voucher_result.voucher_id else null end,
-    case when v_voucher_result.valid then upper(trim(p_voucher_code)) else null end,
+    case when v_voucher_valid then v_voucher_id else null end,
+    case when v_voucher_valid then upper(trim(p_voucher_code)) else null end,
     coalesce(nullif(trim(v_profile.full_name), ''), v_address_name),
     coalesce(v_profile.email, v_email, ''),
     coalesce(nullif(trim(v_profile.phone), ''), v_address_phone),
@@ -1066,10 +1073,10 @@ begin
   insert into public.shipments (order_id, courier, service, status)
   values (v_order_id, v_ship.courier, v_ship.name, 'pending');
 
-  if v_voucher_result.valid then
-    update public.vouchers set used_count = used_count + 1 where id = v_voucher_result.voucher_id;
+  if v_voucher_valid then
+    update public.vouchers set used_count = used_count + 1 where id = v_voucher_id;
     insert into public.voucher_redemptions (voucher_id, user_id, order_id, discount)
-    values (v_voucher_result.voucher_id, v_user, v_order_id, v_discount);
+    values (v_voucher_id, v_user, v_order_id, v_discount);
   end if;
 
   update public.promotions pr
