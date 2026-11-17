@@ -1,0 +1,114 @@
+# Firebase App Hosting configuration for COMPUTECH.
+#
+# Secrets are stored in Google Cloud Secret Manager. Create each secret with:
+#   firebase apphosting:secrets:set NEXT_PUBLIC_SUPABASE_URL
+#   firebase apphosting:secrets:set NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   firebase apphosting:secrets:set SUPABASE_SERVICE_ROLE_KEY
+#   firebase apphosting:secrets:set MIDTRANS_SERVER_KEY
+#   firebase apphosting:secrets:set MIDTRANS_CLIENT_KEY
+#   firebase apphosting:secrets:set XENDIT_SECRET_KEY
+#   firebase apphosting:secrets:set XENDIT_CALLBACK_TOKEN
+#   firebase apphosting:secrets:set RAJAONGKIR_API_KEY
+#
+# `NEXT_PUBLIC_*` values must be available at BUILD time because Next.js inlines
+# them into the client bundle. Server keys only need RUNTIME access.
+
+runConfig:
+  cpu: 1
+  memoryMiB: 1024
+  minInstances: 0
+  maxInstances: 100
+  concurrency: 80
+
+env:
+  # --------------------------------------------------------------------------
+  # Public build-time configuration
+  # --------------------------------------------------------------------------
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://YOUR_APP_HOSTING_DOMAIN
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    secret: NEXT_PUBLIC_SUPABASE_URL
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    secret: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_STORE_EMAIL
+    value: hello@computech.example
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_STORE_WHATSAPP
+    value: "6281234567890"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # --------------------------------------------------------------------------
+  # Server-only configuration
+  # --------------------------------------------------------------------------
+  - variable: SUPABASE_SERVICE_ROLE_KEY
+    secret: SUPABASE_SERVICE_ROLE_KEY
+    availability:
+      - RUNTIME
+
+  - variable: PAYMENT_PROVIDER
+    value: manual
+    availability:
+      - RUNTIME
+
+  - variable: MIDTRANS_SERVER_KEY
+    secret: MIDTRANS_SERVER_KEY
+    availability:
+      - RUNTIME
+
+  - variable: MIDTRANS_CLIENT_KEY
+    secret: MIDTRANS_CLIENT_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: MIDTRANS_IS_PRODUCTION
+    value: "false"
+    availability:
+      - RUNTIME
+
+  - variable: XENDIT_SECRET_KEY
+    secret: XENDIT_SECRET_KEY
+    availability:
+      - RUNTIME
+
+  - variable: XENDIT_CALLBACK_TOKEN
+    secret: XENDIT_CALLBACK_TOKEN
+    availability:
+      - RUNTIME
+
+  - variable: XENDIT_IS_PRODUCTION
+    value: "false"
+    availability:
+      - RUNTIME
+
+  - variable: SHIPPING_PROVIDER
+    value: manual
+    availability:
+      - RUNTIME
+
+  - variable: RAJAONGKIR_API_KEY
+    secret: RAJAONGKIR_API_KEY
+    availability:
+      - RUNTIME
+
+  - variable: RAJAONGKIR_ORIGIN_CITY_ID
+    value: ""
+    availability:
+      - RUNTIME
