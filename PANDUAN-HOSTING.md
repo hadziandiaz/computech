@@ -115,6 +115,19 @@ Setiap `env add` akan meminta nilainya; tempel lalu tekan Enter.
 
 Tanpa langkah ini, link reset password dan konfirmasi email akan gagal.
 
+### Matikan verifikasi email (khusus demo)
+
+Supabase secara default meminta pengguna mengklik link konfirmasi sebelum bisa
+login. Untuk demo/portofolio, matikan saja:
+
+1. **Authentication → Sign In / Providers → Email**.
+2. Matikan **Confirm email**.
+3. **Save**.
+
+Setelah itu akun baru langsung bisa login tanpa email konfirmasi. Jangan
+matikan opsi ini untuk toko sungguhan — verifikasi email mencegah alamat palsu
+dan akun spam.
+
 ## 6. Buat admin pertama
 
 1. Buka https://computech-nine.vercel.app/register dan daftar satu akun.
