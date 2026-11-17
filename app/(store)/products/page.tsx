@@ -31,6 +31,9 @@ function single(value: string | string[] | undefined) {
 }
 
 function positive(value: string) {
+  // An empty query parameter (no filter applied) must stay undefined:
+  // Number("") is 0, which would silently turn into "price <= 0".
+  if (!value.trim()) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }

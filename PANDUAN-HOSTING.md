@@ -65,6 +65,10 @@ menyisakan data demo setengah jadi. Bersihkan dulu, lalu ulangi:
 > file itu menghapus katalog demo beserta pesanan, keranjang, dan ulasan yang
 > bergantung padanya.
 
+Kalau data sudah masuk tetapi beberapa teks terlihat rusak (mis. `â€”` atau `Ã—`),
+cukup jalankan `supabase/fix_mojibake.sql`. File itu memperbaiki teks yang salah
+tanpa menghapus apa pun.
+
 ## 3. Ambil kredensial
 
 **Project Settings -> API** (atau **Data API**):
