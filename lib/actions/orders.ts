@@ -209,9 +209,12 @@ export async function placeOrderAction(
   }
 
   revalidatePath("/cart");
-  revalidatePath("/checkout");
   revalidatePath("/account/orders");
   revalidatePath("/account", "layout");
+  // "/checkout" is deliberately not revalidated here: refreshing the route the
+  // form lives on unmounts it (the cart is now empty) before the client-side
+  // redirect to the order page runs, leaving the shopper on a blank checkout.
+  // The route is dynamic, so it is fetched fresh the next time it is visited.
 
   return {
     ...ok(

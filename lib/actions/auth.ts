@@ -162,7 +162,10 @@ export async function updatePasswordAction(
 
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  return { ...ok("Password updated. Sign in with your new password."), redirectTo: "/login" };
+  // Redirect on the server: the layout revalidation above re-renders the
+  // current route, which would unmount this form before a client-side
+  // redirect could run (and the page would bounce to /forgot-password).
+  redirect("/login?reset=1");
 }
 
 export async function updateProfileAction(

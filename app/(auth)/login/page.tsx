@@ -1,4 +1,4 @@
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight, CheckCircle2, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -19,6 +19,8 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const next = sanitizeNextPath(Array.isArray(params.next) ? params.next[0] : params.next, "/account");
+  const passwordUpdated =
+    (Array.isArray(params.reset) ? params.reset[0] : params.reset) === "1";
   const user = await getAuthUser();
   if (user) redirect(next);
 
@@ -31,6 +33,13 @@ export default async function LoginPage({
       <p className="mt-1 text-sm text-muted">
         Sign in to continue to your account, cart and orders.
       </p>
+
+      {passwordUpdated ? (
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#b8ebc9] bg-[#e9f9ef] px-3 py-2.5 text-sm text-[#18794e]">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span>Password updated. Sign in with your new password.</span>
+        </div>
+      ) : null}
 
       <ActionForm action={signInAction} className="mt-7 space-y-4">
         <input type="hidden" name="next" value={next} />
