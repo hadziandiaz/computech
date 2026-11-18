@@ -2,6 +2,7 @@
 
 import {
   ChevronDown,
+  Cpu,
   GitCompareArrows,
   Heart,
   LogOut,
@@ -71,6 +72,10 @@ export function HeaderClient({
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
+      <div
+        className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-violet via-neon to-acid"
+        aria-hidden
+      />
       <div className="container-page flex h-[68px] items-center gap-3 lg:gap-6">
         <button
           type="button"
@@ -95,15 +100,24 @@ export function HeaderClient({
         </form>
 
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
-          {publicNav.slice(0, 3).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-full px-3 py-2 text-[13px] font-medium text-ink/80 transition-colors hover:bg-mist hover:text-ink"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {publicNav.slice(0, 3).map((item) => {
+            const featured = item.href === "/pc-builder";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-all",
+                  featured
+                    ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126] hover:-translate-y-0.5 hover:bg-violet hover:text-white"
+                    : "text-ink/80 hover:bg-mist hover:text-ink",
+                )}
+              >
+                {featured ? <Cpu className="size-3.5" /> : null}
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-0.5">

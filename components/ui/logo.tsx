@@ -17,7 +17,7 @@ export function Logo({
       aria-label="COMPUTECH home"
       className={cn("group inline-flex items-center gap-2.5", className)}
     >
-      <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-[10px] bg-violet">
+      <span className="relative flex size-9 -rotate-3 items-center justify-center overflow-hidden rounded-[11px] bg-violet shadow-[3px_3px_0_0_#111126] transition-transform group-hover:rotate-0">
         <svg viewBox="0 0 32 32" className="size-6" aria-hidden>
           <path
             d="M23 9.5a8.5 8.5 0 1 0 0 13"
@@ -28,6 +28,7 @@ export function Logo({
           />
           <rect x="21" y="13.5" width="6" height="5" fill="#35D6ED" />
         </svg>
+        <span className="absolute right-0 top-0 size-2 bg-acid" aria-hidden />
       </span>
       {!compact ? (
         <span className="flex flex-col leading-none">

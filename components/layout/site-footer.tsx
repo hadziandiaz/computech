@@ -36,7 +36,7 @@ export async function SiteFooter() {
   const topCategories = categories.filter((category) => !category.parent_id).slice(0, 5);
 
   return (
-    <footer className="mt-20 bg-ink text-white">
+    <footer className="mt-20 border-t-4 border-acid bg-ink text-white">
       <div className="container-page">
         <div className="grid gap-10 border-b border-white/10 py-14 lg:grid-cols-[1.25fr_1fr_1fr_1.15fr]">
           <div>
@@ -85,23 +85,23 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h3 className="eyebrow text-white/40">Shop</h3>
+            <h3 className="eyebrow text-acid/80">Shop</h3>
             <ul className="mt-4 space-y-2.5 text-[13px]">
               {shopLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-white/70 transition-colors hover:text-white">
+                  <Link href={link.href} className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-            <h3 className="eyebrow mt-7 text-white/40">Categories</h3>
+            <h3 className="eyebrow mt-7 text-acid/80">Categories</h3>
             <ul className="mt-4 space-y-2.5 text-[13px]">
               {topCategories.map((category) => (
                 <li key={category.id}>
                   <Link
                     href={`/categories/${category.slug}`}
-                    className="text-white/70 transition-colors hover:text-white"
+                    className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid"
                   >
                     {category.name}
                   </Link>
@@ -111,31 +111,31 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h3 className="eyebrow text-white/40">Support</h3>
+            <h3 className="eyebrow text-acid/80">Support</h3>
             <ul className="mt-4 space-y-2.5 text-[13px]">
               {supportLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-white/70 transition-colors hover:text-white">
+                  <Link href={link.href} className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-            <h3 className="eyebrow mt-7 text-white/40">Company</h3>
+            <h3 className="eyebrow mt-7 text-acid/80">Company</h3>
             <ul className="mt-4 space-y-2.5 text-[13px]">
               <li>
-                <Link href="/about" className="text-white/70 hover:text-white">
+                <Link href="/about" className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid">
                   About COMPUTECH
                 </Link>
               </li>
               <li>
-                <Link href="/brands" className="text-white/70 hover:text-white">
+                <Link href="/brands" className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid">
                   Brands
                 </Link>
               </li>
               {legalLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-white/70 hover:text-white">
+                  <Link href={link.href} className="text-white/70 transition-all hover:translate-x-0.5 hover:text-acid">
                     {link.label}
                   </Link>
                 </li>
@@ -144,8 +144,8 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h3 className="eyebrow text-white/40">The build list</h3>
-            <p className="mt-4 font-display text-xl font-semibold leading-snug tracking-tight">
+            <h3 className="eyebrow text-acid/80">The build list</h3>
+            <p className="mt-4 font-display text-xl font-black uppercase leading-tight tracking-[-0.03em]">
               Better parts. Better builds. Straight to your inbox.
             </p>
             <NewsletterForm />
@@ -159,7 +159,7 @@ export async function SiteFooter() {
             </p>
             <p className="max-w-xl text-white/30">{demoDisclaimer}</p>
           </div>
-          <p className="font-display text-[10vw] font-bold leading-none tracking-[-0.06em] text-white/[0.045] sm:text-[76px]">
+          <p className="font-display text-[10vw] font-black uppercase leading-none tracking-[-0.06em] text-acid/[0.07] sm:text-[76px]">
             BUILD YOUR SETUP.
           </p>
         </div>

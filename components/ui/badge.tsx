@@ -6,6 +6,7 @@ const tones = {
   neutral: "bg-mist text-ink border-line",
   violet: "bg-violet-soft text-violet-dark border-violet/20",
   cyan: "bg-neon-soft text-[#0e7e8f] border-neon/30",
+  acid: "bg-acid text-ink border-acid",
   coral: "bg-coral-soft text-[#c4404b] border-coral/25",
   success: "bg-[#e9f9ef] text-[#18794e] border-[#b8ebc9]",
   warning: "bg-[#fff7e6] text-[#9a6500] border-[#f5dfa6]",

@@ -1,6 +1,6 @@
 import {
-  AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   Cpu,
   Gauge,
   ShieldCheck,
@@ -8,6 +8,7 @@ import {
   Truck,
   Wifi,
   Wrench,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -37,10 +38,27 @@ export const metadata = {
 };
 
 const trustPoints = [
-  { icon: Gauge, title: "Compatibility first", detail: "Socket, memory, clearance and power checks before you buy." },
-  { icon: ShieldCheck, title: "Warranty tracked", detail: "Every order records the warranty period and provider." },
-  { icon: Truck, title: "Shipping that fits", detail: "Choose a courier service and see delivery estimates at checkout." },
-  { icon: Wrench, title: "Technical catalog", detail: "Specifications structured for builders, not marketing pages." },
+  { icon: Gauge, title: "Compatibility first", detail: "Socket, memory, clearance and power checked." },
+  { icon: ShieldCheck, title: "Warranty tracked", detail: "Every order logs period and provider." },
+  { icon: Truck, title: "Delivery that fits", detail: "Pick courier and estimate at checkout." },
+  { icon: Wrench, title: "Real specs", detail: "Structured data for builders, not fluff." },
+];
+
+const buildChecks = [
+  { label: "Processor", value: "Socket, cores, TDP" },
+  { label: "Motherboard", value: "Chipset, memory, form factor" },
+  { label: "Graphics", value: "Length, power, connectors" },
+  { label: "Case", value: "Clearance, fan mounts" },
+];
+
+const tickerWords = [
+  "LIVE STOCK",
+  "PC BUILDER",
+  "NETWORKING",
+  "LAPTOPS",
+  "COMPATIBILITY",
+  "WARRANTY",
+  "FAST CHECKOUT",
 ];
 
 export default async function HomePage() {
@@ -57,71 +75,113 @@ export default async function HomePage() {
   const heroProduct = featured[0] ?? bestSellers[0] ?? null;
   const sideProducts = featured.slice(1, 3);
   const topCategories = categories.slice(0, 5);
-  const featurePromotion = promotions.find((promotion) => promotion.type !== "free_shipping");
+  const featurePromotion =
+    promotions.find((promotion) => promotion.type !== "free_shipping") ?? promotions[0] ?? null;
   const networkingCategory = categories.find((category) => category.slug === "networking");
   const toolsCategory = categories.find((category) => category.slug === "networking-tools");
+  const freshDrops = (newArrivals.length ? newArrivals : bestSellers).slice(0, 4);
 
   return (
     <>
-      <section className="relative overflow-hidden bg-ink text-white">
+      {/* HERO */}
+      <section className="noise-layer relative overflow-hidden bg-ink text-white">
         <div className="absolute inset-0 tech-grid opacity-70" aria-hidden />
         <div
-          className="absolute -right-24 top-0 h-[520px] w-[520px] rounded-full bg-violet/20 blur-[120px]"
+          className="absolute -left-24 top-10 h-[420px] w-[420px] rounded-full bg-violet/30 blur-[120px]"
           aria-hidden
         />
-        <div className="container-page relative grid gap-10 py-14 lg:grid-cols-[1.04fr_0.96fr] lg:items-center lg:py-20">
+        <div
+          className="absolute -right-10 bottom-0 h-[360px] w-[360px] rounded-full bg-neon/20 blur-[120px]"
+          aria-hidden
+        />
+        <div
+          className="absolute right-[18%] top-16 hidden h-28 w-28 rotate-12 rounded-3xl border border-white/10 bg-white/5 lg:block"
+          aria-hidden
+        />
+
+        <div className="container-page relative grid gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-end lg:py-20">
           <div className="anim-rise">
-            <p className="eyebrow flex items-center gap-2 text-neon">
-              <Sparkles className="size-3.5" />
-              Technology, configured properly
-            </p>
-            <h1 className="display-xl mt-4 text-white">
-              BUILD YOUR
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="sticker inline-flex items-center gap-2 rounded-full border border-acid/40 bg-acid px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-ink shadow-[3px_3px_0_0_rgba(255,255,255,0.15)]">
+                <Sparkles className="size-3.5" /> New season drop
+              </span>
+              <span className="eyebrow text-neon">Tech, configured properly</span>
+            </div>
+
+            <h1 className="mt-5 font-display text-[clamp(3.2rem,8vw,6.6rem)] font-black uppercase leading-[0.88] tracking-[-0.06em]">
+              Build your
               <br />
-              SETUP.
-              <span className="ml-3 inline-block text-violet">/</span>
+              <span className="relative inline-block text-white">
+                setup.
+                <span
+                  className="absolute -bottom-1 left-0 -z-10 h-[0.2em] w-[92%] -rotate-1 bg-violet"
+                  aria-hidden
+                />
+              </span>
+              <br />
+              <span className="text-violet">define</span>{" "}
+              <span className="relative inline-block">
+                perf
+                <span className="absolute -bottom-1 left-0 -z-10 h-[0.22em] w-full -rotate-1 bg-acid" />
+              </span>
+              .
             </h1>
+
             <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/65 sm:text-base">
-              Laptops, desktop systems, components and networking equipment — selected for
-              performance, checked for compatibility, and backed by a catalog that shows the
-              details that matter.
+              Laptops, desktops, components & networking — picked for performance,
+              checked for compatibility, priced from live stock. No guesswork, just
+              clean builds.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/products" className={cn(buttonVariants({ variant: "primary", size: "lg" }))}>
-                Shop the catalog <ArrowRight />
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/products" className={cn(buttonVariants({ variant: "neon", size: "lg" }))}>
+                Shop the drop <ArrowRight />
               </Link>
               <Link
                 href="/pc-builder"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
-                  "border-white/20 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
+                  "border-white/25 bg-transparent text-white hover:border-white hover:bg-white/10",
                 )}
               >
                 <Cpu /> Open PC Builder
               </Link>
             </div>
-            <dl className="mt-9 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6">
-              <div>
-                <dt className="text-[10px] uppercase tracking-[0.16em] text-white/40">Components</dt>
-                <dd className="mt-1 font-display text-2xl font-bold">{featured.length + bestSellers.length}+</dd>
-              </div>
-              <div>
-                <dt className="text-[10px] uppercase tracking-[0.16em] text-white/40">Categories</dt>
-                <dd className="mt-1 font-display text-2xl font-bold">{categories.length}</dd>
-              </div>
-              <div>
-                <dt className="text-[10px] uppercase tracking-[0.16em] text-white/40">Brands</dt>
-                <dd className="mt-1 font-display text-2xl font-bold">{brands.length}</dd>
-              </div>
+
+            <dl className="mt-10 grid max-w-lg grid-cols-3 gap-3">
+              {[
+                { label: "Components", value: `${featured.length + bestSellers.length}+` },
+                { label: "Categories", value: `${categories.length}` },
+                { label: "Brands", value: `${brands.length}` },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm"
+                >
+                  <dt className="text-[10px] uppercase tracking-[0.16em] text-white/40">
+                    {stat.label}
+                  </dt>
+                  <dd className="mt-1 font-display text-2xl font-black text-white">
+                    {stat.value}
+                  </dd>
+                </div>
+              ))}
             </dl>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 anim-fade">
+          <div className="relative grid grid-cols-2 gap-3 anim-fade">
+            <span
+              className="sticker-alt absolute -top-4 right-2 z-20 hidden rounded-xl border-2 border-ink bg-acid px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-ink shadow-[4px_4px_0_0_#7957ff] sm:inline-flex"
+              aria-hidden
+            >
+              Spec checked ✓
+            </span>
+
             <Link
               href={heroProduct ? `/products/${heroProduct.slug}` : "/products"}
-              className="group relative col-span-2 overflow-hidden rounded-3xl border border-white/10 bg-white/5"
+              className="group relative col-span-2 overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]"
             >
-              <div className="relative aspect-[16/9]">
+              <div className="relative aspect-[16/10]">
                 {heroProduct && primaryImage(heroProduct) ? (
                   <Image
                     src={primaryImage(heroProduct)!}
@@ -129,31 +189,32 @@ export default async function HomePage() {
                     fill
                     priority
                     sizes="(min-width: 1024px) 540px, 100vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-white/30">
-                    <Cpu className="size-16" />
+                  <div className="flex h-full items-center justify-center text-white/25">
+                    <Cpu className="size-20" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent" />
               </div>
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6">
                 <div className="min-w-0">
-                  <Badge tone="violet" className="border-violet/30 bg-violet/90 text-white">
+                  <Badge tone="acid" className="font-black uppercase tracking-[0.12em]">
                     Editor&apos;s pick
                   </Badge>
-                  <p className="mt-2 line-clamp-1 font-display text-lg font-semibold text-white">
+                  <p className="mt-2 line-clamp-2 font-display text-xl font-black uppercase leading-tight tracking-tight text-white sm:text-2xl">
                     {heroProduct?.name ?? "Explore the COMPUTECH catalog"}
                   </p>
                   {heroProduct ? (
-                    <p className="text-xs text-white/60">
-                      {heroProduct.brand?.name ?? "COMPUTECH"} · {formatIDR(heroProduct.effective_price ?? productUnitPrice(heroProduct))}
+                    <p className="mt-1 text-xs font-semibold text-neon">
+                      {heroProduct.brand?.name ?? "COMPUTECH"} ·{" "}
+                      {formatIDR(heroProduct.effective_price ?? productUnitPrice(heroProduct))}
                     </p>
                   ) : null}
                 </div>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-ink">
-                  <ArrowRight className="size-4" />
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-acid text-ink shadow-[4px_4px_0_0_#111126] transition-transform group-hover:-translate-y-1 group-hover:translate-x-1">
+                  <ArrowUpRight className="size-5" />
                 </span>
               </div>
             </Link>
@@ -171,46 +232,65 @@ export default async function HomePage() {
                       alt={product.name}
                       fill
                       sizes="260px"
-                      className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-[1.04]"
+                      className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-[1.05]"
                     />
                   ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/20 to-transparent" />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-3">
-                  <p className="line-clamp-2 text-[12px] font-semibold leading-snug text-white">
+                  <p className="line-clamp-2 text-[12px] font-bold leading-snug text-white">
                     {product.name}
                   </p>
-                  <p className="mt-1 text-[11px] text-neon">
+                  <p className="mt-1 text-[11px] font-semibold text-neon">
                     {formatIDR(product.effective_price ?? productUnitPrice(product))}
                   </p>
                 </div>
-                <span className="absolute right-3 top-3 font-mono text-[10px] text-white/40">
+                <span className="absolute left-3 top-3 rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white/70 backdrop-blur">
                   0{index + 1}
                 </span>
               </Link>
             ))}
-            {sideProducts.length < 2 ? (
-              <div className="col-span-2 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                <p className="text-xs text-white/55">
-                  Connect your Supabase project and run the seed migrations to populate the
-                  live catalog.
-                </p>
-                <AlertTriangle className="size-4 text-neon" />
+          </div>
+        </div>
+
+        {/* ticker */}
+        <div className="relative border-y border-white/10 bg-acid text-ink">
+          <div className="marquee-track items-center py-2.5 text-[11px] font-black uppercase tracking-[0.22em]">
+            {[0, 1].map((group) => (
+              <div key={group} className="flex items-center" aria-hidden={group === 1}>
+                {tickerWords.concat(tickerWords).map((word, i) => (
+                  <span key={`${group}-${i}`} className="mx-5 inline-flex items-center gap-5">
+                    {word}
+                    <Zap className="size-3.5 fill-ink" />
+                  </span>
+                ))}
               </div>
-            ) : null}
+            ))}
           </div>
         </div>
       </section>
 
+      {/* TRUST STRIP */}
       <section className="border-b border-line bg-white">
-        <div className="container-page grid grid-cols-2 gap-x-6 gap-y-6 py-7 md:grid-cols-4">
-          {trustPoints.map((point) => (
+        <div className="container-page grid grid-cols-2 gap-x-6 gap-y-6 py-8 md:grid-cols-4">
+          {trustPoints.map((point, i) => (
             <div key={point.title} className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-soft text-violet">
+              <span
+                className={cn(
+                  "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink text-ink shadow-[3px_3px_0_0_#111126]",
+                  i % 4 === 0
+                    ? "bg-violet-soft"
+                    : i % 4 === 1
+                      ? "bg-neon-soft"
+                      : i % 4 === 2
+                        ? "bg-acid"
+                        : "bg-coral-soft",
+                )}
+              >
                 <point.icon className="size-4" />
               </span>
               <div>
-                <p className="text-[13px] font-semibold">{point.title}</p>
+                <p className="text-[13px] font-bold">{point.title}</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{point.detail}</p>
               </div>
             </div>
@@ -218,11 +298,18 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* CATEGORIES */}
       <section className="container-page py-14 lg:py-20">
         <SectionHeading
           eyebrow="Shop by category"
-          title="Start with the system. Finish with the details."
-          description="From complete machines to the cable that terminates the run — the catalog is organised the way a real build comes together."
+          title={
+            <>
+              Start with the system.
+              <br />
+              <span className="text-violet">Finish with the details.</span>
+            </>
+          }
+          description="From complete machines to the cable that terminates the run — organised the way a real build comes together."
           action={
             <Link href="/categories" className={buttonVariants({ variant: "outline", size: "sm" })}>
               All categories <ArrowRight />
@@ -235,41 +322,57 @@ export default async function HomePage() {
               key={category.id}
               href={`/categories/${category.slug}`}
               className={cn(
-                "group relative overflow-hidden rounded-2xl border border-line bg-ink",
+                "group relative overflow-hidden rounded-[26px] border-2 border-ink bg-ink shadow-[6px_6px_0_0_#7957ff] transition-transform duration-200 hover:-translate-y-1 hover:-translate-x-0.5",
                 index === 0 && "sm:col-span-2 lg:col-span-2 lg:row-span-2",
               )}
             >
-              <div className={cn("relative", index === 0 ? "aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[420px]" : "aspect-[4/3]")}>
+              <div
+                className={cn(
+                  "relative",
+                  index === 0
+                    ? "aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[420px]"
+                    : "aspect-[4/3]",
+                )}
+              >
                 {category.image_url ? (
                   <Image
                     src={category.image_url}
                     alt={category.name}
                     fill
-                    sizes={index === 0 ? "(min-width: 1024px) 520px, 100vw" : "(min-width: 1024px) 240px, 50vw"}
-                    className="object-cover opacity-80 transition-all duration-500 group-hover:scale-[1.03] group-hover:opacity-100"
+                    sizes={
+                      index === 0
+                        ? "(min-width: 1024px) 520px, 100vw"
+                        : "(min-width: 1024px) 240px, 50vw"
+                    }
+                    className="object-cover opacity-80 transition-all duration-500 group-hover:scale-[1.04] group-hover:opacity-100"
                   />
                 ) : null}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/25 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
               </div>
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="font-display text-lg font-semibold leading-tight text-white">
+              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                <span className="clip-tag mb-2 inline-block bg-acid px-3 py-1 pr-4 text-[10px] font-black uppercase tracking-[0.14em] text-ink">
+                  {category.children?.length ?? 0} subs
+                </span>
+                <p className="font-display text-xl font-black uppercase leading-tight tracking-tight text-white sm:text-2xl">
                   {category.name}
                 </p>
-                <p className="mt-1 line-clamp-1 text-[11px] text-white/55">
-                  {category.children?.length ?? 0} subcategories
-                </p>
               </div>
+              <span className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition-transform group-hover:rotate-45 group-hover:bg-acid group-hover:text-ink">
+                <ArrowUpRight className="size-4" />
+              </span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="border-y border-line bg-white py-14 lg:py-20">
-        <div className="container-page">
+      {/* FEATURED */}
+      <section className="relative overflow-hidden border-y-2 border-ink bg-white py-14 lg:py-20">
+        <div className="dot-grid absolute inset-0 opacity-40" aria-hidden />
+        <div className="container-page relative">
           <SectionHeading
             eyebrow="Featured hardware"
             title="Parts worth building around."
-            description="A rotating selection of systems and components with structured specifications and live stock."
+            description="A rotating selection with structured specs and live stock — ready to drop into your build."
             action={
               <Link href="/products?sort=featured" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                 View all <ArrowRight />
@@ -279,54 +382,62 @@ export default async function HomePage() {
           {featured.length ? (
             <ProductGrid products={featured} className="mt-8" />
           ) : (
-            <div className="mt-8 rounded-2xl border border-dashed border-line bg-mist p-10 text-center">
-              <p className="font-display text-lg font-semibold">The catalog is ready for data.</p>
-              <p className="mx-auto mt-1 max-w-md text-sm text-muted">
-                Apply the Supabase migrations in <code className="font-mono text-xs">supabase/migrations</code> to load the demo
-                catalog and enable live pricing, stock and filtering.
+            <div className="mt-8 rounded-[26px] border-2 border-dashed border-ink/20 bg-mist p-10 text-center">
+              <p className="font-display text-xl font-black uppercase">Catalog warming up</p>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+                Run the Supabase migrations in <code className="font-mono text-xs">supabase/migrations</code>{" "}
+                to load products, stock and live pricing.
               </p>
             </div>
           )}
         </div>
       </section>
 
+      {/* PC BUILDER CTA */}
       <section className="container-page py-14 lg:py-20">
-        <div className="overflow-hidden rounded-3xl bg-ink text-white">
+        <div className="overflow-hidden rounded-[32px] border-2 border-ink bg-ink text-white shadow-[10px_10px_0_0_#d9ff3f]">
           <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="relative p-7 sm:p-10 lg:p-14">
-              <div className="absolute inset-0 tech-grid opacity-60" aria-hidden />
+            <div className="noise-layer relative p-7 sm:p-10 lg:p-14">
+              <div className="absolute inset-0 tech-grid opacity-50" aria-hidden />
               <div className="relative">
-                <p className="eyebrow text-neon">PC Builder</p>
-                <h2 className="display-lg mt-3 max-w-lg text-white">
-                  Compatible by construction, not by guesswork.
+                <span className="sticker inline-flex items-center gap-2 rounded-full bg-acid px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-ink">
+                  <Cpu className="size-3.5" /> PC Builder
+                </span>
+                <h2 className="mt-4 font-display text-4xl font-black uppercase leading-[0.95] tracking-[-0.05em] sm:text-5xl">
+                  Compatible by
+                  <br />
+                  <span className="text-neon">construction</span>,<br />
+                  not guesswork.
                 </h2>
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60">
-                  Set a budget and a workload. COMPUTECH proposes a build from live stock, then
-                  checks sockets, memory generation, GPU clearance, cooler height, power headroom
-                  and connectors as you change parts.
+                  Set budget & workload. We propose a build from live stock, then check
+                  sockets, memory, GPU clearance, cooler height, power headroom and
+                  connectors as you tweak parts.
                 </p>
-                <ul className="mt-6 grid gap-3 text-[13px] text-white/75 sm:grid-cols-2">
+                <ul className="mt-6 grid gap-3 text-[13px] font-medium text-white/80 sm:grid-cols-2">
                   {[
                     "Socket and chipset checks",
                     "Memory type and slot limits",
                     "Case, GPU and cooler clearance",
                     "Wattage and connector headroom",
                   ].map((item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <span className="size-1.5 rounded-full bg-neon" />
+                    <li key={item} className="flex items-center gap-2.5">
+                      <span className="flex size-5 items-center justify-center rounded-md bg-acid text-[10px] font-black text-ink">
+                        ✓
+                      </span>
                       {item}
                     </li>
                   ))}
                 </ul>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/pc-builder" className={cn(buttonVariants({ size: "lg" }))}>
+                  <Link href="/pc-builder" className={cn(buttonVariants({ variant: "neon", size: "lg" }))}>
                     Build my PC <ArrowRight />
                   </Link>
                   <Link
                     href="/compare"
                     className={cn(
                       buttonVariants({ variant: "outline", size: "lg" }),
-                      "border-white/20 bg-transparent text-white hover:bg-white/10",
+                      "border-white/25 bg-transparent text-white hover:bg-white/10",
                     )}
                   >
                     Compare parts
@@ -334,28 +445,24 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="relative min-h-72 border-t border-white/10 bg-white/[0.03] p-7 sm:p-10 lg:border-l lg:border-t-0">
+            <div className="relative min-h-72 border-t-2 border-white/10 bg-white/[0.03] p-7 sm:p-10 lg:border-l-2 lg:border-t-0">
+              <p className="eyebrow mb-4 text-neon">What we validate</p>
               <div className="space-y-3">
-                {[
-                  { label: "Processor", value: "Socket, cores, TDP" },
-                  { label: "Motherboard", value: "Chipset, memory, form factor" },
-                  { label: "Graphics", value: "Length, power, connectors" },
-                  { label: "Case", value: "Clearance, fan mounts" },
-                ].map((item, index) => (
+                {buildChecks.map((item, index) => (
                   <div
                     key={item.label}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-ink/50 px-4 py-3"
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-ink/60 px-4 py-3.5 transition-colors hover:border-acid/40"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-[10px] text-neon">0{index + 1}</span>
+                      <span className="flex size-8 items-center justify-center rounded-lg bg-violet font-mono text-[11px] font-bold text-white">
+                        0{index + 1}
+                      </span>
                       <div>
-                        <p className="text-[13px] font-semibold text-white">{item.label}</p>
+                        <p className="text-[13px] font-bold text-white">{item.label}</p>
                         <p className="text-[11px] text-white/45">{item.value}</p>
                       </div>
                     </div>
-                    <span className="flex size-7 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/60">
-                      ✓
-                    </span>
+                    <span className="text-acid">●</span>
                   </div>
                 ))}
               </div>
@@ -364,8 +471,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* PROMOTIONS */}
       {promotions.length ? (
-        <section className="border-y border-line bg-white py-14 lg:py-20">
+        <section className="border-y-2 border-ink bg-acid/20 py-14 lg:py-20">
           <div className="container-page">
             <SectionHeading
               eyebrow="Live campaigns"
@@ -383,34 +491,47 @@ export default async function HomePage() {
                   key={promotion.id}
                   href={`/promotions/${promotion.slug}`}
                   className={cn(
-                    "group relative flex min-h-52 flex-col justify-between overflow-hidden rounded-2xl border p-5 transition-transform hover:-translate-y-0.5",
+                    "group relative flex min-h-56 flex-col justify-between overflow-hidden rounded-[26px] border-2 border-ink p-5 transition-all hover:-translate-y-1 hover:-translate-x-0.5",
                     index === 0
-                      ? "border-violet/20 bg-violet-soft"
+                      ? "bg-violet text-white shadow-[6px_6px_0_0_#111126]"
                       : index === 1
-                        ? "border-neon/30 bg-neon-soft"
-                        : "border-line bg-mist",
+                        ? "bg-white shadow-[6px_6px_0_0_#35d6ed]"
+                        : "bg-ink text-white shadow-[6px_6px_0_0_#d9ff3f]",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <Badge tone={index === 0 ? "violet" : index === 1 ? "cyan" : "neutral"}>
+                    <Badge
+                      tone={index === 0 ? "acid" : index === 1 ? "violet" : "cyan"}
+                      className="font-black uppercase tracking-[0.1em]"
+                    >
                       {promotion.type.replaceAll("_", " ")}
                     </Badge>
-                    <span className="font-mono text-[10px] text-muted">
+                    <span
+                      className={cn(
+                        "sticker-alt rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold",
+                        index === 1 ? "bg-acid text-ink" : "bg-white/15 text-inherit",
+                      )}
+                    >
                       {promotion.discount_type === "percentage"
                         ? `${promotion.discount_value}% off`
                         : `${formatIDR(promotion.discount_value)} off`}
                     </span>
                   </div>
                   <div className="mt-8">
-                    <h3 className="font-display text-xl font-bold leading-tight tracking-tight">
+                    <h3 className="font-display text-2xl font-black uppercase leading-tight tracking-tight">
                       {promotion.name}
                     </h3>
-                    <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-muted">
+                    <p
+                      className={cn(
+                        "mt-2 line-clamp-2 text-[12px] leading-relaxed",
+                        index === 1 ? "text-muted" : "text-white/70",
+                      )}
+                    >
                       {promotion.description}
                     </p>
-                    <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-ink">
+                    <p className="mt-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]">
                       {formatDateRange(promotion.start_date, promotion.end_date)}
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
                     </p>
                   </div>
                 </Link>
@@ -420,12 +541,19 @@ export default async function HomePage() {
         </section>
       ) : null}
 
+      {/* NETWORKING + FRESH DROPS */}
       <section className="container-page py-14 lg:py-20">
-        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+        <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
           <div>
             <SectionHeading
               eyebrow="Networking"
-              title="Build the network, not just the PC."
+              title={
+                <>
+                  Build the network,
+                  <br />
+                  <span className="text-violet">not just the PC.</span>
+                </>
+              }
               description="Routing, switching, wireless and the tools to terminate every run."
             />
             <div className="mt-6 space-y-3">
@@ -437,75 +565,90 @@ export default async function HomePage() {
                   <Link
                     key={category.id}
                     href={`/categories/${category.slug}`}
-                    className="group flex items-center justify-between rounded-2xl border border-line bg-white p-4 transition-colors hover:border-violet/30"
+                    className="group flex items-center justify-between rounded-2xl border-2 border-ink bg-white p-4 shadow-[4px_4px_0_0_#111126] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#7957ff]"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 items-center justify-center rounded-xl bg-ink text-white">
-                        <Icon className="size-4" />
+                      <span className="flex size-11 items-center justify-center rounded-xl bg-ink text-acid">
+                        <Icon className="size-5" />
                       </span>
                       <div>
-                        <p className="text-sm font-semibold">{category.name}</p>
+                        <p className="text-sm font-bold">{category.name}</p>
                         <p className="text-[11px] text-muted">{category.description ?? fallback}</p>
                       </div>
                     </div>
-                    <ArrowRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
+                    <ArrowUpRight className="size-4 text-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-violet" />
                   </Link>
                 ) : null,
               )}
             </div>
             <Link
               href="/networking"
-              className={cn(buttonVariants({ variant: "dark", size: "md" }), "mt-4")}
+              className={cn(buttonVariants({ variant: "dark", size: "md" }), "mt-5")}
             >
               Explore networking <ArrowRight />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3.5">
-            {(newArrivals.length ? newArrivals : bestSellers).slice(0, 4).map((product) => {
-              const image = primaryImage(product);
-              return (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.slug}`}
-                  className="group overflow-hidden rounded-2xl border border-line bg-white"
-                >
-                  <div className="relative aspect-[4/3] bg-mist">
-                    {image ? (
-                      <Image
-                        src={image}
-                        alt={product.name}
-                        fill
-                        sizes="(min-width: 1024px) 260px, 50vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="p-3.5">
-                    <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{product.name}</p>
-                    <div className="mt-2">
-                      <Price value={product.effective_price ?? productUnitPrice(product)} size="sm" />
+
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="eyebrow text-violet">Fresh arrivals</p>
+              <span className="rounded-full bg-acid px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-ink">
+                Just in
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3.5">
+              {freshDrops.map((product) => {
+                const image = primaryImage(product);
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/products/${product.slug}`}
+                    className="group overflow-hidden rounded-2xl border-2 border-ink bg-white shadow-[4px_4px_0_0_#111126] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#35d6ed]"
+                  >
+                    <div className="relative aspect-[4/3] bg-mist">
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={product.name}
+                          fill
+                          sizes="(min-width: 1024px) 260px, 50vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        />
+                      ) : null}
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+                    <div className="border-t-2 border-ink p-3.5">
+                      <p className="line-clamp-2 text-[12px] font-bold leading-snug">{product.name}</p>
+                      <div className="mt-2">
+                        <Price value={product.effective_price ?? productUnitPrice(product)} size="sm" />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
+      {/* HIGHLIGHT */}
       {featurePromotion ? (
         <section className="container-page pb-14 lg:pb-20">
-          <div className="grid overflow-hidden rounded-3xl border border-line bg-white lg:grid-cols-[1fr_auto]">
-            <div className="p-7 sm:p-10">
-              <p className="eyebrow text-violet">Current highlight</p>
-              <h2 className="display-md mt-2 max-w-xl">{featurePromotion.name}</h2>
-              <p className="mt-2 max-w-xl text-sm text-muted">{featurePromotion.description}</p>
-              <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-                Ends {formatDateRange(featurePromotion.start_date, featurePromotion.end_date)}
-              </p>
+          <div className="noise-layer grid overflow-hidden rounded-[30px] border-2 border-ink bg-ink text-white shadow-[8px_8px_0_0_#7957ff] lg:grid-cols-[1fr_auto]">
+            <div className="relative p-7 sm:p-10">
+              <div className="absolute inset-0 tech-grid opacity-40" aria-hidden />
+              <div className="relative">
+                <p className="eyebrow text-acid">Current highlight</p>
+                <h2 className="mt-2 font-display text-3xl font-black uppercase leading-tight tracking-[-0.04em] sm:text-4xl">
+                  {featurePromotion.name}
+                </h2>
+                <p className="mt-2 max-w-xl text-sm text-white/60">{featurePromotion.description}</p>
+                <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-neon">
+                  Ends {formatDateRange(featurePromotion.start_date, featurePromotion.end_date)}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center border-t border-line bg-mist/60 p-7 lg:border-l lg:border-t-0">
-              <Link href={`/promotions/${featurePromotion.slug}`} className={buttonVariants({ size: "lg" })}>
+            <div className="flex items-center border-t-2 border-white/10 p-7 lg:border-l-2 lg:border-t-0">
+              <Link href={`/promotions/${featurePromotion.slug}`} className={buttonVariants({ variant: "neon", size: "lg" })}>
                 Shop the campaign <ArrowRight />
               </Link>
             </div>
@@ -513,16 +656,17 @@ export default async function HomePage() {
         </section>
       ) : null}
 
+      {/* BRANDS */}
       {brands.length ? (
-        <section className="border-t border-line bg-white py-10">
+        <section className="border-y-2 border-ink bg-white py-10">
           <div className="container-page">
-            <p className="eyebrow text-center text-muted">Hardware partners in the catalog</p>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            <p className="eyebrow text-center text-muted">Brands in the catalog</p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               {brands.slice(0, 18).map((brand) => (
                 <Link
                   key={brand.id}
                   href={`/brands/${brand.slug}`}
-                  className="font-display text-sm font-semibold tracking-wide text-muted/80 transition-colors hover:text-ink"
+                  className="rounded-full border-2 border-ink bg-mist px-4 py-2 font-display text-sm font-bold tracking-wide text-ink shadow-[3px_3px_0_0_#111126] transition-all hover:-translate-y-0.5 hover:bg-acid"
                 >
                   {brand.name}
                 </Link>
@@ -532,23 +676,25 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section className="container-page py-14">
-        <div className="grid gap-4 rounded-3xl bg-violet p-7 text-white sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <p className="eyebrow text-white/70">Need a second opinion?</p>
-            <h2 className="display-md mt-2 max-w-2xl text-white">
-              Tell us the workload. We will help you choose the parts.
+      {/* SUPPORT CTA */}
+      <section className="container-page py-14 lg:py-20">
+        <div className="noise-layer relative grid gap-6 overflow-hidden rounded-[32px] border-2 border-ink bg-violet p-7 text-white shadow-[10px_10px_0_0_#111126] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="absolute -right-10 -top-10 size-48 rounded-full bg-neon/30 blur-3xl" aria-hidden />
+          <div className="absolute bottom-0 left-10 h-2 w-40 -rotate-2 bg-acid" aria-hidden />
+          <div className="relative">
+            <p className="eyebrow text-acid">Need a second opinion?</p>
+            <h2 className="mt-2 font-display text-3xl font-black uppercase leading-tight tracking-[-0.04em] text-white sm:text-4xl">
+              Tell us the workload.
+              <br />
+              We&apos;ll spec the parts.
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-white/70">
-              Send the team your budget, software and constraints. Support messages are stored in
-              the admin inbox so nothing gets lost.
+            <p className="mt-3 max-w-xl text-sm text-white/75">
+              Send your budget, software and constraints. Support messages land in the
+              admin inbox so nothing gets lost.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/contact"
-              className={cn(buttonVariants({ variant: "dark", size: "lg" }), "bg-ink")}
-            >
+          <div className="relative flex flex-wrap gap-3">
+            <Link href="/contact" className={cn(buttonVariants({ variant: "neon", size: "lg" }))}>
               Contact support
             </Link>
             <Link

@@ -4,15 +4,16 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-bold tracking-tight transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-violet text-white shadow-[0_8px_24px_-12px_rgba(121,87,255,0.9)] hover:bg-violet-dark active:scale-[0.98]",
-        dark: "bg-ink text-white hover:bg-ink-soft active:scale-[0.98]",
+          "bg-violet text-white shadow-[0_10px_24px_-12px_rgba(121,87,255,0.95)] hover:-translate-y-0.5 hover:bg-violet-dark hover:shadow-[0_14px_30px_-12px_rgba(121,87,255,0.95)] active:translate-y-0 active:scale-[0.98]",
+        neon: "bg-acid text-ink shadow-[0_8px_0_0_#111126] hover:-translate-y-0.5 hover:bg-acid/90 active:translate-y-1 active:shadow-[0_3px_0_0_#111126]",
+        dark: "bg-ink text-white hover:-translate-y-0.5 hover:bg-ink-soft active:translate-y-0 active:scale-[0.98]",
         outline:
-          "border border-line bg-white text-ink hover:border-ink/30 hover:bg-mist",
+          "border border-line bg-white text-ink hover:-translate-y-0.5 hover:border-ink/40 hover:bg-mist",
         soft: "bg-violet-soft text-violet-dark hover:bg-violet/15",
         ghost: "text-ink hover:bg-line/70",
         danger: "bg-coral text-white hover:bg-[#e95a65]",

@@ -37,13 +37,20 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-ink/15 hover:shadow-[0_18px_40px_-28px_rgba(17,17,38,0.45)]",
+        "group relative flex h-full flex-col overflow-hidden rounded-[22px] border-2 border-ink bg-white shadow-[4px_4px_0_0_#111126] transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-1 hover:shadow-[7px_7px_0_0_#7957ff]",
         className,
       )}
     >
       <div className="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-        <WishlistButton productId={product.id} initialSaved={saved} />
-        <CompareButton productId={product.id} />
+        <WishlistButton
+          productId={product.id}
+          initialSaved={saved}
+          className="rounded-xl border-2 border-ink bg-white shadow-[2px_2px_0_0_#111126] hover:border-coral"
+        />
+        <CompareButton
+          productId={product.id}
+          className="rounded-xl border-2 border-ink bg-white shadow-[2px_2px_0_0_#111126] hover:border-violet"
+        />
       </div>
 
       <Link
@@ -67,27 +74,36 @@ export function ProductCard({
         )}
         <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
           {discount > 0 ? (
-            <Badge tone="coral" className="shadow-sm">
+            <Badge
+              tone="acid"
+              className="border-2 border-ink px-2 py-0.5 font-mono text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#111126]"
+            >
               −{discount}%
             </Badge>
           ) : null}
           {product.promotion ? (
-            <Badge tone="violet" className="max-w-[10rem] truncate shadow-sm">
+            <Badge
+              tone="neutral"
+              className="max-w-[10rem] truncate border-2 border-ink bg-white font-black uppercase tracking-[0.08em] text-ink shadow-[2px_2px_0_0_#7957ff]"
+            >
               {product.promotion.name}
             </Badge>
           ) : null}
           {product.is_demo ? (
-            <Badge tone="neutral" className="bg-white/90 shadow-sm">
+            <Badge
+              tone="neutral"
+              className="border-2 border-ink bg-acid font-black uppercase tracking-[0.08em] text-ink shadow-[2px_2px_0_0_#111126]"
+            >
               Demo
             </Badge>
           ) : null}
         </div>
         {!available ? (
-          <span className="absolute inset-x-0 bottom-0 bg-ink/80 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+          <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-ink/90 py-1.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-white">
             Out of stock
           </span>
         ) : lowStock ? (
-          <span className="absolute inset-x-0 bottom-0 bg-[#9a6500]/90 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+          <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-coral py-1.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-white">
             Only {stock} left
           </span>
         ) : null}
@@ -95,7 +111,7 @@ export function ProductCard({
 
       <div className="flex flex-1 flex-col p-3.5 sm:p-4">
         <div className="flex items-center justify-between gap-2 text-[11px] text-muted">
-          <span className="truncate font-medium uppercase tracking-[0.08em]">
+          <span className="truncate font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-violet-dark">
             {product.brand?.name ?? product.category?.name ?? "COMPUTECH"}
           </span>
           <span className="shrink-0 font-mono text-[10px] text-muted/70">{product.sku}</span>
@@ -104,7 +120,7 @@ export function ProductCard({
         <Link href={`/products/${product.slug}`} className="mt-1.5 block">
           <h3
             className={cn(
-              "line-clamp-2 font-display text-[15px] font-semibold leading-snug tracking-tight text-ink transition-colors group-hover:text-violet-dark",
+              "line-clamp-2 font-display text-[15px] font-black uppercase leading-tight tracking-[-0.02em] text-ink transition-colors group-hover:text-violet-dark",
               compact && "text-sm",
             )}
           >
@@ -130,7 +146,7 @@ export function ProductCard({
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+        <div className="mt-auto flex items-end justify-between gap-2 border-t-2 border-ink pt-3">
           <div className="min-w-0">
             <Price value={price} compareAt={price < product.price ? product.price : null} size="md" />
             {product.warranty_months > 0 ? (
@@ -145,7 +161,7 @@ export function ProductCard({
             size="icon"
             label="Add to cart"
             outOfStock={!available}
-            className="size-9"
+            className="size-10 rounded-xl border-2 border-ink shadow-[3px_3px_0_0_#111126] transition-transform hover:-translate-y-0.5 hover:translate-x-0.5"
           />
         </div>
       </div>
