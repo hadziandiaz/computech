@@ -93,7 +93,7 @@ export function PcBuilder({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [onlyFitting, setOnlyFitting] = useState(false);
-  const [budget, setBudget] = useState(15_000_000);
+  const [budgetInput, setBudgetInput] = useState("15000000");
   const [usage, setUsage] = useState<PcUsage>("gaming");
   const [buildName, setBuildName] = useState("My COMPUTECH Build");
   const [notes, setNotes] = useState("");
@@ -101,6 +101,11 @@ export function PcBuilder({
   const [saved, setSaved] = useState<{ id: string; shareSlug: string } | null>(null);
   const [recommendationNotes, setRecommendationNotes] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
+
+  // Keep the field's raw text separate from the numeric value. Coercing an
+  // empty field to 0 used to write "0" back into the input, so the next digit
+  // the shopper typed became "05" (and the budget was read as 5).
+  const budget = budgetInput === "" ? 0 : Math.max(0, Number(budgetInput) || 0);
 
   const compatibility = useMemo(() => checkCompatibility(selection), [selection]);
   const total = useMemo(() => buildTotal(selection), [selection]);
@@ -610,12 +615,12 @@ export function PcBuilder({
               <Label htmlFor="builder-budget">Budget (IDR)</Label>
               <Input
                 id="builder-budget"
-                type="number"
-                min={0}
-                step={500000}
-                value={budget}
-                onChange={(event) => setBudget(Math.max(0, Number(event.target.value) || 0))}
+                type="text"
+                inputMode="numeric"
+                value={budgetInput}
+                onChange={(event) => setBudgetInput(event.target.value.replace(/[^0-9]/g, ""))}
                 className="h-10"
+                aria-label="Budget in Indonesian Rupiah"
               />
             </div>
             <div>
