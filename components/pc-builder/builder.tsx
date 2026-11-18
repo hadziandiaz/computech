@@ -22,7 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -90,6 +90,7 @@ export function PcBuilder({
   const router = useRouter();
   const [selection, setSelection] = useState<BuilderSelection>(initialSelection);
   const [activeType, setActiveType] = useState<PcComponentType>("cpu");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [onlyFitting, setOnlyFitting] = useState(false);
   const [budget, setBudget] = useState(15_000_000);
@@ -130,9 +131,32 @@ export function PcBuilder({
       .slice(0, 60);
   }, [components, activeType, search, onlyFitting, selection]);
 
+  // The part picker is a dialog so the choices appear exactly where the shopper
+  // is looking, instead of in a card far below the slot list.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPickerOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [pickerOpen]);
+
+  function openPicker(type: PcComponentType) {
+    setActiveType(type);
+    setSearch("");
+    setPickerOpen(true);
+  }
+
   function choose(component: PcComponent) {
     setSelection((current) => ({ ...current, [activeType]: component }));
     setSaved(null);
+    setPickerOpen(false);
   }
 
   function clear(type: PcComponentType) {
@@ -260,16 +284,23 @@ export function PcBuilder({
                 {chosen} of {MAX_COMPONENTS} component slots filled. Compatibility updates as you
                 change parts.
               </p>
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-violet-soft px-2.5 py-1 text-[11px] font-semibold text-violet-dark">
+                <Search className="size-3" /> Click any slot to open the parts picker
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAll}
-              disabled={!chosen || pending}
-              className="print:hidden"
-            >
-              <Trash2 /> Clear build
-            </Button>
+            <div className="flex items-center gap-1.5 print:hidden">
+              <Button size="sm" onClick={() => openPicker(pcComponentOrder.find((type) => !selection[type]) ?? activeType)}>
+                <Plus /> Choose parts
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                disabled={!chosen || pending}
+              >
+                <Trash2 /> Clear build
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-1.5">
@@ -297,10 +328,8 @@ export function PcBuilder({
                 >
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveType(type);
-                      setSearch("");
-                    }}
+                    onClick={() => openPicker(type)}
+                    aria-label={`Choose ${pcComponentLabels[type].toLowerCase()}`}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   >
                     <span
@@ -350,7 +379,7 @@ export function PcBuilder({
                     </>
                   ) : (
                     <span className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-violet">
-                      Select <ChevronRight className="size-3.5" />
+                      Choose <ChevronRight className="size-3.5" />
                     </span>
                   )}
                 </div>
@@ -359,41 +388,66 @@ export function PcBuilder({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-line bg-white print:hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-            <div>
-              <p className="font-display text-sm font-semibold">
-                {pcComponentLabels[activeType]}
-              </p>
-              <p className="text-[11px] text-muted">
-                {candidates.length} option{candidates.length === 1 ? "" : "s"} shown
-              </p>
-            </div>
-            <label className="flex items-center gap-2 text-[11px] font-medium text-muted">
-              <input
-                type="checkbox"
-                checked={onlyFitting}
-                onChange={(event) => setOnlyFitting(event.target.checked)}
-                className="size-3.5 rounded border-line accent-[#7957FF]"
-              />
-              Compatible only
-            </label>
-          </div>
+        {pickerOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 backdrop-blur-sm sm:items-center sm:p-6 print:hidden"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setPickerOpen(false);
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="part-picker-title"
+              className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-line bg-white shadow-2xl sm:rounded-3xl"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet">
+                    Pick a part
+                  </p>
+                  <h2 id="part-picker-title" className="mt-0.5 font-display text-lg font-semibold">
+                    Choose {pcComponentLabels[activeType].toLowerCase()}
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-muted">
+                    {candidates.length} option{candidates.length === 1 ? "" : "s"} from the live
+                    catalog. Compatibility is checked for every part.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(false)}
+                  aria-label="Close part picker"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-ink/20 hover:text-ink"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
 
-          <div className="border-b border-line px-4 py-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={`Search ${pcComponentLabels[activeType].toLowerCase()} by name or SKU`}
-                className="pl-9"
-                aria-label="Search components"
-              />
-            </div>
-          </div>
+              <div className="border-b border-line px-5 py-3">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                  <Input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder={`Search ${pcComponentLabels[activeType].toLowerCase()} by name or SKU`}
+                    className="pl-9"
+                    aria-label="Search components"
+                    autoFocus
+                  />
+                </div>
+                <label className="mt-3 flex w-fit items-center gap-2 text-[11px] font-medium text-muted">
+                  <input
+                    type="checkbox"
+                    checked={onlyFitting}
+                    onChange={(event) => setOnlyFitting(event.target.checked)}
+                    className="size-3.5 rounded border-line accent-[#7957FF]"
+                  />
+                  Show compatible parts only
+                </label>
+              </div>
 
-          <div className="max-h-[430px] overflow-y-auto p-2">
+              <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {candidates.length ? (
               <div className="space-y-1">
                 {candidates.map((component) => {
@@ -458,7 +512,21 @@ export function PcBuilder({
               </div>
             )}
           </div>
-        </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-mist/40 px-5 py-3">
+                <p className="text-[11px] text-muted">
+                  Currently selected:{" "}
+                  <span className="font-semibold text-ink">
+                    {selection[activeType]?.name ?? "Nothing yet"}
+                  </span>
+                </p>
+                <Button size="sm" onClick={() => setPickerOpen(false)}>
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-32">
@@ -634,7 +702,7 @@ export function PcBuilder({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setActiveType(type)}
+                    onClick={() => openPicker(type)}
                     className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-medium text-muted hover:border-violet/40 hover:text-violet-dark"
                   >
                     {pcComponentLabels[type]}
