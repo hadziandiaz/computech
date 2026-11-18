@@ -64,10 +64,15 @@ export function CompareButton({
       toast.error(`You can compare up to ${MAX_COMPARE} products at once.`);
       return;
     }
-    writeCompareIds([...ids, productId]);
+    const next = [...ids, productId];
+    writeCompareIds(next);
     setSelected(true);
-    toast.success("Added to comparison. Open Compare to review specs.");
-    router.push("/compare");
+    toast.success(`Added to comparison (${next.length}/${MAX_COMPARE}).`, {
+      action: {
+        label: "Open compare",
+        onClick: () => router.push("/compare"),
+      },
+    });
   }
 
   return (

@@ -1,16 +1,28 @@
 "use client";
 
-import { GitCompareArrows, Loader2, ShoppingCart, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleHelp,
+  GitCompareArrows,
+  Loader2,
+  ShoppingCart,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { COMPARE_EVENT, readCompareIds, writeCompareIds } from "@/components/store/compare-button";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Price } from "@/components/ui/price";
 import { Rating } from "@/components/ui/rating";
 import { formatIDR } from "@/lib/format";
+import { checkCompatibility, type BuilderSelection } from "@/lib/pc-builder/compatibility";
 import { productUnitPrice } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types/domain";
@@ -51,6 +63,16 @@ export function CompareClient() {
   const [products, setProducts] = useState<CompareProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
+
+  const compatibility = useMemo(() => {
+    const selection: BuilderSelection = {};
+    for (const product of products) {
+      const type = product.pc_spec?.component_type;
+      if (type && !selection[type]) selection[type] = product;
+    }
+    if (Object.keys(selection).length < 2) return null;
+    return checkCompatibility(selection);
+  }, [products]);
 
   useEffect(() => {
     const sync = () => setIds(readCompareIds());
@@ -133,6 +155,97 @@ export function CompareClient() {
           </Button>
         </div>
       </div>
+
+      {compatibility ? (
+        <div
+          className={cn(
+            "rounded-2xl border-2 border-ink p-4 shadow-[4px_4px_0_0_#111126]",
+            compatibility.status === "compatible"
+              ? "bg-[#e9f9ef]"
+              : compatibility.status === "warning"
+                ? "bg-[#fff7e6]"
+                : compatibility.status === "incompatible"
+                  ? "bg-coral-soft"
+                  : "bg-mist",
+          )}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              {compatibility.status === "compatible" ? (
+                <CheckCircle2 className="size-5 text-[#18794e]" />
+              ) : compatibility.status === "warning" ? (
+                <AlertTriangle className="size-5 text-[#9a6500]" />
+              ) : compatibility.status === "incompatible" ? (
+                <XCircle className="size-5 text-[#c4404b]" />
+              ) : (
+                <CircleHelp className="size-5 text-muted" />
+              )}
+              <div>
+                <p className="font-display text-sm font-black uppercase tracking-tight">
+                  Compatibility check
+                </p>
+                <p className="text-[12px] text-muted">
+                  Based on the PC components currently in this comparison.
+                </p>
+              </div>
+            </div>
+            <Badge
+              tone={
+                (compatibility.status === "compatible"
+                  ? "success"
+                  : compatibility.status === "warning"
+                    ? "warning"
+                    : compatibility.status === "incompatible"
+                      ? "coral"
+                      : "neutral") as BadgeTone
+              }
+              className="border-ink font-black uppercase tracking-[0.1em]"
+            >
+              {compatibility.status === "compatible"
+                ? "Compatible"
+                : compatibility.status === "warning"
+                  ? "Needs a look"
+                  : compatibility.status === "incompatible"
+                    ? "Incompatible"
+                    : "Not enough data"}
+            </Badge>
+          </div>
+          {compatibility.checks.length ? (
+            <ul className="mt-3 grid gap-2 border-t border-ink/10 pt-3 sm:grid-cols-2">
+              {compatibility.checks.map((check) => (
+                <li key={check.id} className="flex items-start gap-2 text-[12px] leading-relaxed">
+                  <span
+                    className={cn(
+                      "mt-1 size-2 shrink-0 rotate-45",
+                      check.status === "compatible"
+                        ? "bg-[#18794e]"
+                        : check.status === "warning"
+                          ? "bg-[#9a6500]"
+                          : check.status === "incompatible"
+                            ? "bg-coral"
+                            : "bg-muted",
+                    )}
+                  />
+                  <span>
+                    <span className="font-bold">{check.label}:</span>{" "}
+                    <span className="text-muted">{check.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Link
+            href="/pc-builder"
+            className={cn(buttonVariants({ variant: "dark", size: "sm" }), "mt-4")}
+          >
+            Check in PC Builder
+          </Link>
+        </div>
+      ) : (
+        <div className="rounded-2xl border-2 border-dashed border-line bg-mist/60 px-4 py-3 text-[12px] text-muted">
+          Compatibility verdict appears when you compare at least two PC components.
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white">
         <table className="w-full min-w-[720px] border-collapse text-left text-sm">

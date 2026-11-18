@@ -6,7 +6,7 @@ import { CompareClient } from "@/components/store/compare-client";
 export const metadata = {
   title: "Compare products",
   description:
-    "Compare up to four COMPUTECH products side by side, including price, stock, warranty and technical specifications.",
+    "Compare up to four COMPUTECH products side by side, including price, stock, warranty, specifications and PC component compatibility.",
 };
 
 export default function ComparePage() {
@@ -15,7 +15,7 @@ export default function ComparePage() {
       <PageHero
         eyebrow="Side by side"
         title="Compare before you commit."
-        description="Selections are stored in this browser only. Differences between products are highlighted so the trade-offs are obvious."
+        description="Selections are stored in this browser only. Differences are highlighted, and PC components get a live compatibility verdict."
         crumbs={[{ label: "Compare" }]}
         aside={
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4">

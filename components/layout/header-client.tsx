@@ -5,6 +5,7 @@ import {
   Cpu,
   GitCompareArrows,
   Heart,
+  LayoutGrid,
   LogOut,
   Menu,
   Package,
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   UserRound,
+  Wifi,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +21,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { signOutAction } from "@/lib/actions/auth";
+import {
+  COMPARE_EVENT,
+  readCompareIds,
+} from "@/components/store/compare-button";
 import { Logo } from "@/components/ui/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { publicNav } from "@/lib/constants";
@@ -50,11 +56,23 @@ export function HeaderClient({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [compareCount, setCompareCount] = useState(0);
 
   useEffect(() => {
     setMobileOpen(false);
     setShopOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const sync = () => setCompareCount(readCompareIds().length);
+    sync();
+    window.addEventListener(COMPARE_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(COMPARE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -69,6 +87,23 @@ export function HeaderClient({
     router.push(term ? `/products?q=${encodeURIComponent(term)}` : "/products");
     setMobileOpen(false);
   }
+
+  function isNavActive(href: string) {
+    if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+    if (href === "/products") {
+      return /^\/(categories|brands|promotions)(\/|$)/.test(pathname);
+    }
+    if (href === "/pc-builder") {
+      return pathname.startsWith("/builds/");
+    }
+    return false;
+  }
+
+  const navIcons: Record<string, typeof LayoutGrid> = {
+    "/products": LayoutGrid,
+    "/pc-builder": Cpu,
+    "/networking": Wifi,
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
@@ -101,19 +136,21 @@ export function HeaderClient({
 
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
           {publicNav.slice(0, 3).map((item) => {
-            const featured = item.href === "/pc-builder";
+            const active = isNavActive(item.href);
+            const Icon = navIcons[item.href];
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-all",
-                  featured
+                  active
                     ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126] hover:-translate-y-0.5 hover:bg-violet hover:text-white"
                     : "text-ink/80 hover:bg-mist hover:text-ink",
                 )}
               >
-                {featured ? <Cpu className="size-3.5" /> : null}
+                {active && Icon ? <Icon className="size-3.5" /> : null}
                 {item.label}
               </Link>
             );
@@ -123,10 +160,21 @@ export function HeaderClient({
         <div className="ml-auto flex items-center gap-0.5">
           <Link
             href="/compare"
-            className="hidden size-10 items-center justify-center rounded-full text-ink/70 hover:bg-mist hover:text-ink sm:inline-flex"
-            aria-label="Compare products"
+            className={cn(
+              "relative hidden size-10 items-center justify-center rounded-full transition-colors sm:inline-flex",
+              isNavActive("/compare")
+                ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126]"
+                : "text-ink/70 hover:bg-mist hover:text-ink",
+            )}
+            aria-label={`Compare products${compareCount ? `, ${compareCount} selected` : ""}`}
+            aria-current={isNavActive("/compare") ? "page" : undefined}
           >
             <GitCompareArrows className="size-[19px]" />
+            {compareCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-violet text-[10px] font-bold text-white">
+                {compareCount > 9 ? "9+" : compareCount}
+              </span>
+            ) : null}
           </Link>
           <Link
             href={user ? "/account/wishlist" : "/login?next=%2Faccount%2Fwishlist"}
@@ -288,15 +336,25 @@ export function HeaderClient({
                 />
               </form>
               <nav className="space-y-1" aria-label="Mobile primary">
-                {publicNav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-ink hover:bg-mist"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {publicNav.map((item) => {
+                  const active = isNavActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
+                        active
+                          ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126]"
+                          : "text-ink hover:bg-mist",
+                      )}
+                    >
+                      {active ? <span className="size-1.5 rotate-45 bg-violet" /> : null}
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </nav>
 
               <p className="eyebrow mt-6 px-3 text-muted">Categories</p>
@@ -313,8 +371,14 @@ export function HeaderClient({
               </nav>
 
               <div className="mt-6 grid grid-cols-2 gap-2">
-                <Link href="/compare" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                  Compare
+                <Link
+                  href="/compare"
+                  className={buttonVariants({
+                    variant: isNavActive("/compare") ? "primary" : "outline",
+                    size: "sm",
+                  })}
+                >
+                  Compare{compareCount > 0 ? ` (${compareCount})` : ""}
                 </Link>
                 <Link href="/track-order" className={buttonVariants({ variant: "outline", size: "sm" })}>
                   Track order
