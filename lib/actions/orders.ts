@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
@@ -9,7 +10,6 @@ import {
   fieldErrors,
   firstZodMessage,
   numberValue,
-  ok,
   text,
 } from "@/lib/actions/helpers";
 import type { ActionResult } from "@/lib/actions/types";
@@ -102,9 +102,7 @@ function composeAddress(parsed: z.infer<typeof checkoutSchema>) {
   };
 }
 
-export async function placeOrderAction(
-  formData: FormData,
-): Promise<ActionResult<{ orderId: string; orderNumber: string; paymentUrl: string | null }>> {
+export async function placeOrderAction(formData: FormData): Promise<ActionResult> {
   const user = await actionUser();
   if (!user) return fail("Sign in to place your order.", "auth");
 
@@ -182,12 +180,10 @@ export async function placeOrderAction(
   if (!result.order_id) return fail("The order could not be created. Please try again.");
 
   const order = await getUserOrder(user.id, result.order_id);
-  let paymentUrl: string | null = null;
 
   if (order) {
     try {
       const intent = await createPaymentIntent(order);
-      paymentUrl = intent.paymentUrl;
       const admin = createSupabaseAdminClient();
       await admin
         .from("payments")
@@ -211,26 +207,12 @@ export async function placeOrderAction(
   revalidatePath("/cart");
   revalidatePath("/account/orders");
   revalidatePath("/account", "layout");
-  // "/checkout" is deliberately not revalidated here: refreshing the route the
-  // form lives on unmounts it (the cart is now empty) before the client-side
-  // redirect to the order page runs, leaving the shopper on a blank checkout.
-  // The route is dynamic, so it is fetched fresh the next time it is visited.
-
-  return {
-    ...ok(
-      `Order ${result.order_number ?? ""} created. ${
-        paymentUrl
-          ? "Complete the payment to start processing."
-          : "Follow the payment instructions on your order page."
-      }`,
-      {
-        orderId: result.order_id,
-        orderNumber: result.order_number ?? "",
-        paymentUrl,
-      },
-    ),
-    redirectTo: `/account/orders/${result.order_id}?created=1`,
-  };
+  // Navigate on the server. Returning a redirectTo for the client to follow
+  // is unreliable here: revalidating any path after the cart is emptied
+  // re-renders the checkout route and the form unmounts before its effect can
+  // run, leaving the shopper on "There is nothing to check out".
+  // The destination page renders its own "Order placed successfully" banner.
+  redirect(`/account/orders/${result.order_id}?created=1`);
 }
 
 export async function cancelOrderAction(
