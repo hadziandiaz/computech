@@ -13,7 +13,7 @@ export function AccountNav({ name, email }: { name: string; email: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="lg:sticky lg:top-28 lg:self-start">
+    <aside className="min-w-0 w-full lg:sticky lg:top-28 lg:self-start">
       <div className="mb-4 hidden items-center gap-3 rounded-2xl border border-line bg-white p-4 lg:flex">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
           {name.slice(0, 2).toUpperCase()}
