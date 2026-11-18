@@ -17,6 +17,10 @@ import {
   text,
 } from "@/lib/actions/helpers";
 import type { ActionResult } from "@/lib/actions/types";
+import {
+  PRODUCT_IMAGE_BUCKET,
+  productImagePathFromUrl,
+} from "@/lib/storage/product-images";
 import { slugify } from "@/lib/utils";
 import { tryCreateSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -172,6 +176,11 @@ export async function saveProductAction(
   if (inventoryError) return fail(inventoryError.message);
 
   const imageUrls = parseImageUrls(text(formData, "image_urls"));
+  const { data: previousImages } = await supabase
+    .from("product_images")
+    .select("url")
+    .eq("product_id", productId);
+
   await supabase.from("product_images").delete().eq("product_id", productId);
   if (imageUrls.length) {
     await supabase.from("product_images").insert(
@@ -183,6 +192,21 @@ export async function saveProductAction(
         is_primary: index === 0,
       })),
     );
+  }
+
+  // Remove Storage objects that are no longer referenced after the save.
+  // Best-effort: a cleanup failure must not roll back a valid catalog update.
+  const removedPaths = ((previousImages ?? []) as Array<{ url: string }>)
+    .map((image) => image.url)
+    .filter((url) => !imageUrls.includes(url))
+    .map(productImagePathFromUrl)
+    .filter((path): path is string => Boolean(path));
+  if (removedPaths.length) {
+    try {
+      await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove(removedPaths);
+    } catch (error) {
+      console.error("Product image cleanup failed", error);
+    }
   }
 
   const specs = parseSpecs(text(formData, "specifications"));

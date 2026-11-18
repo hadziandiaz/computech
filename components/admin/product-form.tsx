@@ -1,3 +1,4 @@
+import { ProductImageUploader } from "@/components/admin/product-image-uploader";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/input";
 import { saveProductAction } from "@/lib/actions/admin/catalog";
@@ -177,11 +178,10 @@ export function ProductForm({
         <h2 className="font-display text-base font-semibold">Media and specifications</h2>
         <div className="mt-4 grid gap-4">
           <Field
-            label="Image URLs"
-            htmlFor="image_urls"
-            hint="One https URL per line. The first image becomes the primary image."
+            label="Product photos"
+            hint="Upload from your device or drag photos here. The first photo becomes the primary image."
           >
-            <Textarea id="image_urls" name="image_urls" rows={3} defaultValue={images} />
+            <ProductImageUploader initialUrls={images ? images.split("\n") : []} />
           </Field>
           <Field
             label="Specifications"
