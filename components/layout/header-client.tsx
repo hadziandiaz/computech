@@ -81,6 +81,22 @@ export function HeaderClient({
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileOpen(false);
+    }
+    function handleResize() {
+      if (window.innerWidth >= 1024) setMobileOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mobileOpen]);
+
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const term = query.trim();
@@ -117,6 +133,8 @@ export function HeaderClient({
           className="inline-flex size-9 items-center justify-center rounded-lg text-ink hover:bg-mist lg:hidden"
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-menu"
         >
           <Menu className="size-5" />
         </button>
@@ -312,7 +330,14 @@ export function HeaderClient({
             onClick={() => setMobileOpen(false)}
             aria-hidden
           />
-          <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl anim-rise">
+          <div
+            id="mobile-menu"
+            className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl anim-rise"
+            onClick={(event) => {
+              const target = event.target as HTMLElement;
+              if (target.closest("a, button")) setMobileOpen(false);
+            }}
+          >
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <Logo />
               <button
