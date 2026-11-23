@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { signOutAction } from "@/lib/actions/auth";
 import {
@@ -57,6 +57,8 @@ export function HeaderClient({
   const [shopOpen, setShopOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [compareCount, setCompareCount] = useState(0);
+  const shopButtonRef = useRef<HTMLButtonElement>(null);
+  const shopMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -97,6 +99,24 @@ export function HeaderClient({
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!shopOpen) return;
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (shopButtonRef.current?.contains(target) || shopMenuRef.current?.contains(target)) return;
+      setShopOpen(false);
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setShopOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [shopOpen]);
+
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const term = query.trim();
@@ -131,7 +151,7 @@ export function HeaderClient({
         <button
           type="button"
           className="inline-flex size-9 items-center justify-center rounded-lg text-ink hover:bg-mist lg:hidden"
-          onClick={() => setMobileOpen(true)}
+          onClick={() => setMobileOpen((open) => !open)}
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
@@ -256,9 +276,11 @@ export function HeaderClient({
       <div className="hidden border-t border-line/80 lg:block">
         <div className="container-page flex h-10 items-center gap-1">
           <button
+            ref={shopButtonRef}
             type="button"
             onClick={() => setShopOpen((open) => !open)}
             aria-expanded={shopOpen}
+            aria-controls="shop-menu"
             className="flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold text-ink hover:bg-mist"
           >
             <Menu className="size-3.5" />
@@ -293,8 +315,13 @@ export function HeaderClient({
 
       {shopOpen ? (
         <div
+          ref={shopMenuRef}
+          id="shop-menu"
           className="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_24px_40px_-30px_rgba(17,17,38,0.35)] lg:block"
           onMouseLeave={() => setShopOpen(false)}
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest("a")) setShopOpen(false);
+          }}
         >
           <div className="container-page grid grid-cols-5 gap-6 py-7">
             {categories.map((category) => (
