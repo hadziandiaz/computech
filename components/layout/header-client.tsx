@@ -101,7 +101,7 @@ export function HeaderClient({
 
   useEffect(() => {
     if (!shopOpen) return;
-    function handlePointerDown(event: MouseEvent) {
+    function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
       if (shopButtonRef.current?.contains(target) || shopMenuRef.current?.contains(target)) return;
       setShopOpen(false);
@@ -109,10 +109,10 @@ export function HeaderClient({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setShopOpen(false);
     }
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [shopOpen]);
@@ -318,7 +318,6 @@ export function HeaderClient({
           ref={shopMenuRef}
           id="shop-menu"
           className="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_24px_40px_-30px_rgba(17,17,38,0.35)] lg:block"
-          onMouseLeave={() => setShopOpen(false)}
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("a")) setShopOpen(false);
           }}
