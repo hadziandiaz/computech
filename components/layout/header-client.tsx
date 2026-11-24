@@ -142,7 +142,7 @@ export function HeaderClient({
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-line bg-white/95">
       <div
         className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-violet via-neon to-acid"
         aria-hidden
