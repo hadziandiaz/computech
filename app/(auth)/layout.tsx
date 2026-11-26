@@ -1,7 +1,9 @@
-import { Cpu, PackageCheck, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Cpu, PackageCheck, ShieldCheck, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
+import { buttonVariants } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
+import { cn } from "@/lib/utils";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -52,20 +54,23 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </aside>
 
       <main className="flex min-h-screen flex-col bg-white">
-        <div className="flex items-center justify-between border-b border-line px-5 py-4 lg:hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-8">
           <Logo />
-          <Link href="/products" className="text-[12px] font-bold text-violet">
-            Belanja
+          <Link
+            href="/"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "border-violet/40 bg-violet-soft/60 text-violet-dark hover:bg-violet-soft",
+            )}
+          >
+            <ArrowLeft />
+            Kembali ke toko
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8">
           <div className="w-full max-w-[420px]">{children}</div>
         </div>
         <div className="px-5 pb-6 text-center text-[11px] text-muted">
-          <Link href="/" className="font-semibold text-violet hover:underline">
-            Kembali ke toko
-          </Link>
-          <span className="mx-2 text-line">|</span>
           <Link href="/privacy" className="hover:text-ink">
             Privasi
           </Link>

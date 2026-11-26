@@ -2,7 +2,7 @@ import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Label, Select } from "@/components/ui/input";
 import type { CatalogFacets } from "@/lib/data/products";
 import { cn } from "@/lib/utils";
 
@@ -67,33 +67,6 @@ export function ProductFilters({
               </option>
             ))}
           </Select>
-        </div>
-
-        <div>
-          <Label>Price range (IDR)</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              name="min"
-              min={0}
-              step={10000}
-              placeholder={facets.minPrice ? String(facets.minPrice) : "Min"}
-              defaultValue={value("min")}
-              aria-label="Minimum price"
-              className="h-10"
-            />
-            <span className="text-muted">–</span>
-            <Input
-              type="number"
-              name="max"
-              min={0}
-              step={10000}
-              placeholder={facets.maxPrice ? String(facets.maxPrice) : "Max"}
-              defaultValue={value("max")}
-              aria-label="Maximum price"
-              className="h-10"
-            />
-          </div>
         </div>
 
         <label className="flex items-center gap-2.5 text-[13px] font-medium text-ink">

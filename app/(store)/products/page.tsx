@@ -30,14 +30,6 @@ function single(value: string | string[] | undefined) {
   return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }
 
-function positive(value: string) {
-  // An empty query parameter (no filter applied) must stay undefined:
-  // Number("") is 0, which would silently turn into "price <= 0".
-  if (!value.trim()) return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
-}
-
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -57,8 +49,6 @@ export default async function ProductsPage({
       q: q || undefined,
       categorySlug: category || undefined,
       brandSlug: brand || undefined,
-      minPrice: positive(single(params.min)),
-      maxPrice: positive(single(params.max)),
       inStock: stockOnly,
       sort,
       page,
@@ -77,12 +67,31 @@ export default async function ProductsPage({
     stockOnly ? { label: "In stock only", key: "stock" } : null,
   ].filter(Boolean) as Array<{ label: string; key: string }>;
 
+  function chipHref(key: string) {
+    const next = new URLSearchParams();
+    for (const [paramKey, raw] of Object.entries(params)) {
+      if (
+        paramKey === key ||
+        paramKey === "page" ||
+        paramKey === "min" ||
+        paramKey === "max" ||
+        raw == null
+      ) {
+        continue;
+      }
+      if (Array.isArray(raw)) raw.forEach((item) => next.append(paramKey, item));
+      else next.set(paramKey, raw);
+    }
+    const query = next.toString();
+    return query ? `/products?${query}` : "/products";
+  }
+
   return (
     <>
       <PageHero
         eyebrow="The catalog"
         title={q ? `Results for “${q}”` : "Every part, properly documented."}
-        description="Filter by category, brand, price and availability. Prices shown include live campaign pricing where a promotion applies."
+        description="Filter by category, brand and availability. Find laptops, components and accessories in one catalog."
         crumbs={[{ label: "Products" }]}
         aside={
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4">
@@ -120,9 +129,9 @@ export default async function ProductsPage({
                 {chips.map((chip) => (
                   <Link
                     key={chip.key}
-                    href={`/products${chip.key === "q" ? "" : ""}`}
+                    href={chipHref(chip.key)}
                     className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-3 py-1 text-[11px] font-medium text-muted transition-colors hover:border-coral/30 hover:text-coral"
-                    title="Reset all filters"
+                    title={`Hapus filter ${chip.label}`}
                   >
                     {chip.label}
                     <span aria-hidden>×</span>
@@ -139,7 +148,7 @@ export default async function ProductsPage({
                 className="mt-6"
                 icon={<PackageSearch className="size-5" />}
                 title="No products match those filters"
-                description="Try a wider price range, remove a brand or category filter, or search for a different term."
+                description="Try a different category, brand or search term."
                 action={
                   <Link href="/products" className={buttonVariants({ variant: "primary", size: "sm" })}>
                     Reset filters
