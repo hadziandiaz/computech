@@ -17,16 +17,16 @@ export const publicNav = [
 ];
 
 export const accountNav = [
-  { label: "Overview", href: "/account", icon: "LayoutDashboard" },
-  { label: "My Orders", href: "/account/orders", icon: "Package" },
-  { label: "Wishlist", href: "/account/wishlist", icon: "Heart" },
-  { label: "Saved Builds", href: "/account/builds", icon: "Cpu" },
-  { label: "My Vouchers", href: "/account/vouchers", icon: "Ticket" },
-  { label: "Addresses", href: "/account/addresses", icon: "MapPin" },
-  { label: "Notifications", href: "/account/notifications", icon: "Bell" },
-  { label: "My Reviews", href: "/account/reviews", icon: "Star" },
-  { label: "My Profile", href: "/account/profile", icon: "User" },
-  { label: "Account Settings", href: "/account/settings", icon: "Settings" },
+  { label: "Overview", href: "/account", icon: "LayoutDashboard", group: "Ringkasan" },
+  { label: "My Orders", href: "/account/orders", icon: "Package", group: "Belanja" },
+  { label: "Wishlist", href: "/account/wishlist", icon: "Heart", group: "Belanja" },
+  { label: "My Vouchers", href: "/account/vouchers", icon: "Ticket", group: "Belanja" },
+  { label: "Addresses", href: "/account/addresses", icon: "MapPin", group: "Belanja" },
+  { label: "Saved Builds", href: "/account/builds", icon: "Cpu", group: "Aktivitas" },
+  { label: "Notifications", href: "/account/notifications", icon: "Bell", group: "Aktivitas" },
+  { label: "My Reviews", href: "/account/reviews", icon: "Star", group: "Aktivitas" },
+  { label: "My Profile", href: "/account/profile", icon: "User", group: "Pengaturan" },
+  { label: "Account Settings", href: "/account/settings", icon: "Settings", group: "Pengaturan" },
 ];
 
 export const adminNav = [
