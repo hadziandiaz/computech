@@ -361,7 +361,7 @@ export function HeaderClient({
             className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl anim-rise"
             onClick={(event) => {
               const target = event.target as HTMLElement;
-              if (target.closest("a, button")) setMobileOpen(false);
+              if (target.closest("a")) setMobileOpen(false);
             }}
           >
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
@@ -463,7 +463,10 @@ export function HeaderClient({
                       </Link>
                     )}
                   </div>
-                  <form action={signOutAction}>
+                  <form
+                    action={signOutAction}
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <button type="submit" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "w-full text-coral")}>
                       Sign out
                     </button>
