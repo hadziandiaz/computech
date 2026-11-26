@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,7 +16,7 @@ import {
 import type { ActionResult } from "@/lib/actions/types";
 import { sanitizeNextPath } from "@/lib/auth";
 import { mergeGuestCartIntoDb } from "@/lib/cart/service";
-import { siteUrl } from "@/lib/env";
+import { siteUrl, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 import { createSupabaseServerClient, tryCreateSupabaseServerClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -122,11 +123,25 @@ export async function requestPasswordResetAction(
     .safeParse(text(formData, "email").toLowerCase());
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid email.");
 
-  const supabase = await tryCreateSupabaseServerClient();
-  if (!supabase) return fail("Supabase is not configured.", "not_configured");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return fail("Supabase is not configured.", "not_configured");
+  }
+
+  // Use implicit flow here so the recovery link works even when the email is
+  // opened on a different device/browser than the one that requested it.
+  // PKCE would bind the code verifier to the requesting browser and fail on
+  // cross-device clicks.
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: "implicit",
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
 
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
-    redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/reset-password")}`,
+    redirectTo: `${siteUrl}/auth/reset-callback`,
   });
   if (error) return fail(error.message);
 

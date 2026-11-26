@@ -15,8 +15,10 @@ const siteUrl = "https://computech-nine.vercel.app";
 const requiredRedirects = [
   `${siteUrl}/auth/callback`,
   `${siteUrl}/auth/confirm`,
+  `${siteUrl}/auth/reset-callback`,
   "http://localhost:3000/auth/callback",
   "http://localhost:3000/auth/confirm",
+  "http://localhost:3000/auth/reset-callback",
 ];
 
 const recoveryTemplate = `<p>Halo,</p>

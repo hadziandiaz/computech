@@ -12,6 +12,10 @@ export const metadata = {
   description: "Choose a new password for your COMPUTECH account.",
 };
 
+// This page depends on the recovery session cookie. Without this, Next may
+// prerender a permanent redirect to /forgot-password at build time.
+export const dynamic = "force-dynamic";
+
 export default async function ResetPasswordPage() {
   const user = await getAuthUser();
   if (!user) redirect("/forgot-password");
