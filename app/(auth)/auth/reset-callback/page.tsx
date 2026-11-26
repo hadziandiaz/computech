@@ -17,7 +17,15 @@ export default function ResetCallbackPage() {
       const error = hash.get("error") ?? query.get("error");
 
       if (error) {
-        setMessage(`Link reset tidak valid: ${error}. Silakan minta email reset baru.`);
+        const description =
+          hash.get("error_description") ?? query.get("error_description") ?? "";
+        const expired =
+          error === "access_denied" || /invalid|expired|not found/i.test(description);
+        setMessage(
+          expired
+            ? "Link reset sudah terpakai atau kedaluwarsa. Minta email reset terbaru, lalu klik sekali saja dari email yang paling baru."
+            : `Link reset tidak valid: ${description || error}`,
+        );
         return;
       }
 
