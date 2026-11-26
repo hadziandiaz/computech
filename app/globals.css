@@ -39,7 +39,7 @@ html {
 }
 
 body {
-  background-color: var(--color-mist);
+  background-color: #ffffff;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss01" on, "cv05" on;

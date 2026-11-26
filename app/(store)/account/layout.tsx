@@ -14,7 +14,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const name = user.profile?.full_name?.trim() || user.email.split("@")[0] || "Customer";
 
   return (
-    <div className="bg-[#fbfbfe]">
+    <div className="bg-mist/50">
       <div className="container-page py-8 lg:py-10">
         <div className="grid gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start">
           <AccountNav name={name} email={user.email} />

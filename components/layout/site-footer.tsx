@@ -33,41 +33,40 @@ const companyLinks = [
   { label: "Terms", href: "/terms" },
 ];
 
-const linkClass =
-  "text-[13px] text-white/70 transition-all hover:translate-x-0.5 hover:text-acid";
+const linkClass = "text-[13px] text-muted transition-colors hover:text-violet";
 
 export async function SiteFooter() {
   const [settings, categories] = await Promise.all([getSiteSettings(), getCategories()]);
   const topCategories = categories.filter((category) => !category.parent_id).slice(0, 3);
 
   return (
-    <footer className="mt-14 border-t-4 border-acid bg-ink text-white">
+    <footer className="mt-12 border-t border-line bg-white">
       <div className="container-page">
-        <div className="grid gap-8 border-b border-white/10 py-10 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.15fr]">
+        <div className="grid gap-7 border-b border-line py-9 sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_1fr_1.1fr]">
           <div>
-            <Logo tone="light" />
-            <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-white/55">
+            <Logo />
+            <p className="mt-3 max-w-xs text-[12px] leading-relaxed text-muted">
               {settings.store_tagline.replace(/\.$/, "")}. Laptops, parts and networking gear
               for people who care how their machines perform.
             </p>
             {settings.store_email || settings.store_whatsapp || settings.store_address ? (
-              <ul className="mt-4 space-y-1.5 text-[12px] text-white/60">
+              <ul className="mt-3 space-y-1.5 text-[12px] text-muted">
                 {settings.store_email ? (
                   <li className="flex items-start gap-2">
-                    <Mail className="mt-0.5 size-3.5 text-neon" />
-                    <a href={`mailto:${settings.store_email}`} className="hover:text-white">
+                    <Mail className="mt-0.5 size-3.5 text-violet" />
+                    <a href={`mailto:${settings.store_email}`} className="hover:text-ink">
                       {settings.store_email}
                     </a>
                   </li>
                 ) : null}
                 {settings.store_whatsapp ? (
                   <li className="flex items-start gap-2">
-                    <Phone className="mt-0.5 size-3.5 text-neon" />
+                    <Phone className="mt-0.5 size-3.5 text-violet" />
                     <a
                       href={`https://wa.me/${settings.store_whatsapp.replace(/[^0-9]/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="hover:text-white"
+                      className="hover:text-ink"
                     >
                       {settings.store_whatsapp}
                     </a>
@@ -75,13 +74,13 @@ export async function SiteFooter() {
                 ) : null}
                 {settings.store_address ? (
                   <li className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-3.5 text-neon" />
+                    <MapPin className="mt-0.5 size-3.5 text-violet" />
                     <span>{settings.store_address}</span>
                   </li>
                 ) : null}
                 {settings.store_hours ? (
                   <li className="flex items-start gap-2">
-                    <Clock className="mt-0.5 size-3.5 text-neon" />
+                    <Clock className="mt-0.5 size-3.5 text-violet" />
                     <span>{settings.store_hours}</span>
                   </li>
                 ) : null}
@@ -90,7 +89,7 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h3 className="eyebrow text-acid/80">Belanja</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink">Belanja</h3>
             <ul className="mt-3 space-y-2">
               {shopLinks.map((link) => (
                 <li key={link.href}>
@@ -100,16 +99,21 @@ export async function SiteFooter() {
                 </li>
               ))}
             </ul>
-            <h3 className="eyebrow mt-5 text-acid/60">Kategori populer</h3>
+            <h3 className="mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
+              Kategori populer
+            </h3>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <Link href="/categories" className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] text-white/60 hover:border-acid hover:text-acid">
+              <Link
+                href="/categories"
+                className="rounded-full border border-line px-2.5 py-1 text-[11px] text-muted hover:border-violet hover:text-violet"
+              >
                 Semua
               </Link>
               {topCategories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] text-white/60 hover:border-acid hover:text-acid"
+                  className="rounded-full border border-line px-2.5 py-1 text-[11px] text-muted hover:border-violet hover:text-violet"
                 >
                   {category.name}
                 </Link>
@@ -118,7 +122,7 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h3 className="eyebrow text-acid/80">Bantuan</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink">Bantuan</h3>
             <ul className="mt-3 space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.href}>
@@ -128,7 +132,9 @@ export async function SiteFooter() {
                 </li>
               ))}
             </ul>
-            <h3 className="eyebrow mt-5 text-acid/60">Perusahaan</h3>
+            <h3 className="mt-5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
+              Perusahaan
+            </h3>
             <ul className="mt-2 space-y-2">
               {companyLinks.map((link) => (
                 <li key={link.href}>
@@ -140,25 +146,24 @@ export async function SiteFooter() {
             </ul>
           </div>
 
-          <div>
-            <h3 className="eyebrow text-acid/80">The build list</h3>
-            <p className="mt-3 font-display text-lg font-black uppercase leading-tight tracking-[-0.03em]">
+          <div className="rounded-xl bg-violet-soft p-4">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-violet-dark">
+              The build list
+            </h3>
+            <p className="mt-2 font-display text-base font-bold leading-snug text-ink">
               Better parts. Better builds. Straight to your inbox.
             </p>
             <NewsletterForm />
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 py-5">
-          <div className="flex flex-col gap-2 text-[11px] text-white/35 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 py-5 text-[11px] text-muted">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <p>
               © {new Date().getFullYear()} {settings.store_name}. All prices in Indonesian Rupiah.
             </p>
-            <p className="max-w-xl text-white/30">{demoDisclaimer}</p>
+            <p className="max-w-xl text-muted/70">{demoDisclaimer}</p>
           </div>
-          <p className="hidden font-display text-[7vw] font-black uppercase leading-none tracking-[-0.06em] text-acid/[0.06] sm:block sm:text-[54px]">
-            BUILD YOUR SETUP.
-          </p>
         </div>
       </div>
     </footer>

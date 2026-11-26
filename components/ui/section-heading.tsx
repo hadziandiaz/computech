@@ -20,24 +20,23 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-end justify-between gap-4",
+        "flex flex-wrap items-end justify-between gap-3",
         align === "center" && "flex-col items-center text-center",
         className,
       )}
     >
       <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
         {eyebrow ? (
-          <div className="mb-3 flex items-center gap-3">
-            <span className="size-2 rotate-45 bg-acid" />
-            <p className="eyebrow text-violet">{eyebrow}</p>
-            <span className="h-px w-10 bg-ink/20" />
-          </div>
+          <p className="mb-1.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-violet">
+            <span className="h-3 w-1 rounded-full bg-violet" />
+            {eyebrow}
+          </p>
         ) : null}
-        <h2 className="display-md font-black uppercase tracking-[-0.045em] text-ink">
+        <h2 className="font-display text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
           {title}
         </h2>
         {description ? (
-          <p className="mt-2 text-sm leading-relaxed text-muted sm:text-[15px]">
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted sm:text-sm">
             {description}
           </p>
         ) : null}

@@ -11,17 +11,17 @@ export function AnnouncementBar({
   if (!text) return null;
 
   const content = (
-    <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap">
       <Zap className="size-3.5 fill-acid text-acid" />
       {text}
       {link ? <ArrowUpRight className="size-3.5" /> : null}
-      <span className="mx-4 inline-block size-1 rotate-45 bg-coral" aria-hidden />
+      <span className="mx-4 inline-block size-1 rounded-full bg-neon" aria-hidden />
     </span>
   );
 
   return (
-    <div className="border-b border-white/10 bg-ink text-white">
-      <div className="container-page relative flex h-9 items-center overflow-hidden text-[11px] font-semibold uppercase tracking-[0.12em] sm:text-xs">
+    <div className="bg-violet text-white">
+      <div className="container-page flex h-8 items-center overflow-hidden text-[11px] font-medium sm:text-xs">
         <div className="marquee-track items-center">
           {[0, 1].map((group) => (
             <div key={group} className="flex items-center" aria-hidden={group === 1}>

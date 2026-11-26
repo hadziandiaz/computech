@@ -144,10 +144,6 @@ export function HeaderClient({
     return false;
   }
 
-  const primaryNav = publicNav.filter((item) =>
-    ["/products", "/pc-builder", "/promotions"].includes(item.href),
-  );
-
   const bottomTabs = [
     { id: "home", href: "/", label: "Home", icon: House },
     { id: "shop", href: "/products", label: "Shop", icon: LayoutGrid },
@@ -171,12 +167,8 @@ export function HeaderClient({
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/95">
-      <div
-        className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-violet via-neon to-acid"
-        aria-hidden
-      />
-      <div className="container-page flex h-16 items-center gap-2 lg:gap-5">
+    <header className="sticky top-0 z-50 border-b border-line bg-white">
+      <div className="container-page flex h-[60px] items-center gap-2 lg:gap-4">
         <button
           type="button"
           className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-ink hover:bg-mist lg:hidden"
@@ -194,64 +186,36 @@ export function HeaderClient({
           type="button"
           onClick={openMobileSearch}
           aria-label="Search products"
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-ink/70 hover:bg-mist md:hidden"
+          className="ml-auto inline-flex size-9 shrink-0 items-center justify-center rounded-full text-ink/75 hover:bg-mist md:hidden"
         >
           <Search className={iconClass} />
         </button>
 
-        <form onSubmit={submitSearch} className="relative ml-2 hidden min-w-0 flex-1 md:block">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search laptops, components, networking…"
-            aria-label="Search products"
-            className="h-10 w-full rounded-full border border-line bg-mist/70 pl-10 pr-4 text-sm outline-none transition-colors focus:border-violet focus:bg-white"
-          />
+        <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
+          <div className="flex h-10 w-full max-w-2xl overflow-hidden rounded-lg border border-violet/50 bg-white focus-within:border-violet focus-within:ring-2 focus-within:ring-violet/15">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Cari laptop, komponen, networking…"
+              aria-label="Search products"
+              className="min-w-0 flex-1 bg-transparent px-3.5 text-[13px] outline-none placeholder:text-muted/70"
+            />
+            <button
+              type="submit"
+              aria-label="Submit search"
+              className="flex w-11 shrink-0 items-center justify-center bg-violet text-white transition-colors hover:bg-violet-dark"
+            >
+              <Search className="size-4" />
+            </button>
+          </div>
         </form>
 
-        <button
-          ref={shopButtonRef}
-          type="button"
-          onClick={() => setShopOpen((open) => !open)}
-          aria-expanded={shopOpen}
-          aria-controls="shop-menu"
-          className="ml-auto hidden h-9 items-center gap-1.5 rounded-full px-3 text-[12px] font-bold text-ink transition-colors hover:bg-mist lg:inline-flex"
-        >
-          <Menu className="size-3.5" />
-          Shop all
-          <ChevronDown className={cn("size-3.5 transition-transform", shopOpen && "rotate-180")} />
-        </button>
-
-        <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
-          {primaryNav.map((item) => {
-            const active = isNavActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "inline-flex items-center rounded-full px-3 py-2 text-[13px] font-semibold transition-all",
-                  active
-                    ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126] hover:-translate-y-0.5 hover:bg-violet hover:text-white"
-                    : "text-ink/80 hover:bg-mist hover:text-ink",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-0.5 lg:ml-0">
+        <div className="ml-auto flex items-center gap-0.5 md:ml-0">
           <Link
             href="/compare"
             className={cn(
               "relative hidden size-9 items-center justify-center rounded-full transition-colors sm:inline-flex",
-              isNavActive("/compare")
-                ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126]"
-                : "text-ink/70 hover:bg-mist hover:text-ink",
+              isNavActive("/compare") ? "bg-violet-soft text-violet" : "text-ink/75 hover:bg-mist",
             )}
             aria-label={`Compare products${compareCount ? `, ${compareCount} selected` : ""}`}
             aria-current={isNavActive("/compare") ? "page" : undefined}
@@ -265,29 +229,22 @@ export function HeaderClient({
           </Link>
           <Link
             href={user ? "/account/wishlist" : "/login?next=%2Faccount%2Fwishlist"}
-            className="hidden size-9 items-center justify-center rounded-full text-ink/70 hover:bg-mist hover:text-ink sm:inline-flex"
+            className="hidden size-9 items-center justify-center rounded-full text-ink/75 hover:bg-mist sm:inline-flex"
             aria-label="Wishlist"
           >
             <Heart className={iconClass} />
           </Link>
           <Link
-            href={user ? "/account" : "/login"}
-            className="hidden size-9 items-center justify-center rounded-full text-ink/70 hover:bg-mist hover:text-ink sm:inline-flex lg:hidden"
-            aria-label={user ? "Account" : "Sign in"}
-          >
-            <UserRound className={iconClass} />
-          </Link>
-          <Link
             href="/cart"
             className={cn(
               "relative inline-flex size-9 items-center justify-center rounded-full text-ink hover:bg-mist",
-              isNavActive("/cart") && "bg-mist",
+              isNavActive("/cart") && "bg-violet-soft text-violet",
             )}
             aria-label={`Cart with ${cartCount} items`}
           >
             <ShoppingCart className={iconClass} />
             {cartCount > 0 ? (
-              <span className="absolute right-0 top-0 flex size-4 items-center justify-center rounded-full bg-violet text-[10px] font-bold text-white">
+              <span className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-coral text-[10px] font-bold text-white">
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             ) : null}
@@ -299,7 +256,7 @@ export function HeaderClient({
                 className="flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-3 transition-colors hover:border-violet/40"
                 aria-label="Go to account"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-ink text-[10px] font-bold text-white">
+                <span className="flex size-7 items-center justify-center rounded-full bg-violet text-[10px] font-bold text-white">
                   {initials(user.name)}
                 </span>
                 <span className="max-w-24 truncate text-xs font-semibold">{user.name}</span>
@@ -335,16 +292,63 @@ export function HeaderClient({
         </div>
       </div>
 
+      <div className="hidden border-t border-line/70 lg:block">
+        <div className="container-page flex h-10 items-center gap-4">
+          <button
+            ref={shopButtonRef}
+            type="button"
+            onClick={() => setShopOpen((open) => !open)}
+            aria-expanded={shopOpen}
+            aria-controls="shop-menu"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-violet-soft px-3 text-[12px] font-bold text-violet-dark transition-colors hover:bg-violet/15"
+          >
+            <Menu className="size-3.5" />
+            Kategori
+            <ChevronDown className={cn("size-3.5 transition-transform", shopOpen && "rotate-180")} />
+          </button>
+          <nav className="flex min-w-0 flex-1 items-center gap-5 overflow-x-auto no-scrollbar" aria-label="Primary">
+            {publicNav.map((item) => {
+              const active = isNavActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative flex h-10 shrink-0 items-center text-[12px] font-semibold transition-colors",
+                    active ? "text-violet" : "text-ink/75 hover:text-violet",
+                  )}
+                >
+                  {item.label}
+                  {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-violet" /> : null}
+                </Link>
+              );
+            })}
+            <Link href="/track-order" className="shrink-0 text-[12px] font-semibold text-ink/75 hover:text-violet">
+              Lacak pesanan
+            </Link>
+            <Link href="/contact" className="shrink-0 text-[12px] font-semibold text-ink/75 hover:text-violet">
+              Bantuan
+            </Link>
+          </nav>
+          {user?.staff ? (
+            <Link href="/admin" className="inline-flex shrink-0 items-center gap-1 text-[12px] font-bold text-violet hover:text-violet-dark">
+              <ShieldCheck className="size-3.5" /> Admin
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
       {shopOpen ? (
         <div
           ref={shopMenuRef}
           id="shop-menu"
-          className="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_24px_40px_-30px_rgba(17,17,38,0.35)] lg:block"
+          className="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-lg lg:block"
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("a")) setShopOpen(false);
           }}
         >
-          <div className="container-page grid grid-cols-5 gap-6 py-6">
+          <div className="container-page grid grid-cols-5 gap-6 py-5">
             {categories.map((category) => (
               <div key={category.slug}>
                 <Link
@@ -368,13 +372,13 @@ export function HeaderClient({
               </div>
             ))}
           </div>
-          <div className="border-t border-line/80 bg-mist/60">
+          <div className="border-t border-line bg-mist/70">
             <div className="container-page flex items-center gap-5 py-2.5 text-[12px] font-medium text-muted">
               <Link href="/track-order" className="inline-flex items-center gap-1.5 hover:text-ink">
-                <Package className="size-3.5" /> Track order
+                <Package className="size-3.5" /> Lacak pesanan
               </Link>
               <Link href="/contact" className="hover:text-ink">Support</Link>
-              <Link href="/categories" className="hover:text-ink">All categories</Link>
+              <Link href="/categories" className="hover:text-ink">Semua kategori</Link>
               {user?.staff ? (
                 <Link href="/admin" className="inline-flex items-center gap-1.5 font-semibold text-violet hover:text-violet-dark">
                   <ShieldCheck className="size-3.5" /> Admin
@@ -415,13 +419,13 @@ export function HeaderClient({
                   ref={mobileSearchRef}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search products"
+                  placeholder="Cari produk"
                   aria-label="Search products"
-                  className="h-11 w-full rounded-full border border-line bg-mist pl-10 pr-4 text-sm outline-none focus:border-violet focus:bg-white"
+                  className="h-11 w-full rounded-lg border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-violet"
                 />
               </form>
 
-              <p className="eyebrow px-3 text-muted">Belanja</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Belanja</p>
               <nav className="mt-2 space-y-0.5" aria-label="Mobile shopping">
                 {publicNav.map((item) => {
                   const active = isNavActive(item.href);
@@ -431,20 +435,17 @@ export function HeaderClient({
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-                        active
-                          ? "bg-acid text-ink shadow-[3px_3px_0_0_#111126]"
-                          : "text-ink hover:bg-mist",
+                        "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors",
+                        active ? "bg-violet-soft text-violet-dark" : "text-ink hover:bg-mist",
                       )}
                     >
-                      {active ? <span className="size-1.5 rotate-45 bg-violet" /> : null}
                       {item.label}
                     </Link>
                   );
                 })}
               </nav>
 
-              <p className="eyebrow mt-6 px-3 text-muted">Kategori</p>
+              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Kategori</p>
               <div className="mt-2 flex flex-wrap gap-2 px-1">
                 <Link
                   href="/categories"
@@ -463,18 +464,12 @@ export function HeaderClient({
                 ))}
               </div>
 
-              <p className="eyebrow mt-6 px-3 text-muted">Alat & bantuan</p>
+              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Alat & bantuan</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <Link
-                  href="/pc-builder"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
+                <Link href="/pc-builder" className={buttonVariants({ variant: "outline", size: "sm" })}>
                   PC Builder
                 </Link>
-                <Link
-                  href="/compare"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
+                <Link href="/compare" className={buttonVariants({ variant: "outline", size: "sm" })}>
                   Compare{compareCount > 0 ? ` (${compareCount})` : ""}
                 </Link>
                 <Link
@@ -484,7 +479,7 @@ export function HeaderClient({
                   Wishlist
                 </Link>
                 <Link href="/track-order" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                  Track order
+                  Lacak pesanan
                 </Link>
                 <Link href="/contact" className={buttonVariants({ variant: "outline", size: "sm" })}>
                   Support
@@ -501,7 +496,7 @@ export function HeaderClient({
               {user ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex size-9 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-violet text-xs font-bold text-white">
                       {initials(user.name)}
                     </span>
                     <div className="min-w-0">

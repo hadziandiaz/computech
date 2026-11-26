@@ -37,25 +37,25 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink bg-white shadow-[2px_2px_0_0_#111126] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_#7957ff] sm:rounded-[22px] sm:border-2 sm:shadow-[4px_4px_0_0_#111126] sm:hover:-translate-x-0.5 sm:hover:-translate-y-1 sm:hover:shadow-[7px_7px_0_0_#7957ff]",
+        "group relative flex h-full flex-col overflow-hidden rounded-xl border border-line bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-violet/40 hover:shadow-lg",
         className,
       )}
     >
-      <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 opacity-100 transition-opacity sm:right-2.5 sm:top-2.5 sm:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+      <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
         <WishlistButton
           productId={product.id}
           initialSaved={saved}
-          className="size-8 rounded-lg border bg-white shadow-[1px_1px_0_0_#111126] hover:border-coral sm:size-9 sm:rounded-xl sm:border-2 sm:shadow-[2px_2px_0_0_#111126]"
+          className="size-8 rounded-full border border-line bg-white/95 shadow-sm hover:border-coral sm:size-9"
         />
         <CompareButton
           productId={product.id}
-          className="size-8 rounded-lg border bg-white shadow-[1px_1px_0_0_#111126] hover:border-violet sm:size-9 sm:rounded-xl sm:border-2 sm:shadow-[2px_2px_0_0_#111126]"
+          className="size-8 rounded-full border border-line bg-white/95 shadow-sm hover:border-violet sm:size-9"
         />
       </div>
 
       <Link
         href={`/products/${product.slug}`}
-        className="relative block aspect-[3/2] overflow-hidden bg-mist sm:aspect-[4/3]"
+        className="relative block aspect-square overflow-hidden bg-mist"
         aria-label={product.name}
       >
         {image ? (
@@ -64,64 +64,51 @@ export function ProductCard({
             alt={product.name}
             fill
             priority={priority}
-            sizes="(min-width: 1280px) 250px, (min-width: 768px) 30vw, (min-width: 640px) 45vw, 46vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+            sizes="(min-width: 1280px) 210px, (min-width: 1024px) 25vw, (min-width: 640px) 32vw, 48vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         ) : (
-          <span className="flex h-full items-center justify-center text-muted/50">
-            <ImageIcon className="size-9" />
+          <span className="flex h-full items-center justify-center text-muted/40">
+            <ImageIcon className="size-8" />
           </span>
         )}
-        <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {discount > 0 ? (
-            <Badge
-              tone="acid"
-              className="border border-ink px-1.5 py-0.5 font-mono text-[10px] font-black uppercase tracking-[0.08em] shadow-[1px_1px_0_0_#111126] sm:border-2 sm:px-2 sm:text-[11px] sm:shadow-[2px_2px_0_0_#111126]"
-            >
+            <Badge tone="coral" className="border-0 bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">
               −{discount}%
             </Badge>
           ) : null}
           {product.promotion ? (
-            <Badge
-              tone="neutral"
-              className="max-w-[8rem] truncate border bg-white font-black uppercase tracking-[0.08em] text-ink shadow-[1px_1px_0_0_#7957ff] sm:max-w-[10rem] sm:border-2 sm:shadow-[2px_2px_0_0_#7957ff]"
-            >
+            <Badge className="max-w-[7.5rem] truncate border-0 bg-violet px-1.5 py-0.5 text-[10px] font-semibold text-white">
               {product.promotion.name}
             </Badge>
           ) : null}
           {product.is_demo ? (
-            <Badge
-              tone="neutral"
-              className="border border-ink bg-acid font-black uppercase tracking-[0.08em] text-ink shadow-[1px_1px_0_0_#111126] sm:border-2 sm:shadow-[2px_2px_0_0_#111126]"
-            >
+            <Badge className="border-0 bg-ink/80 px-1.5 py-0.5 text-[9px] font-semibold text-white">
               Demo
             </Badge>
           ) : null}
         </div>
         {!available ? (
-          <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-ink/90 py-1.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-white">
-            Out of stock
+          <span className="absolute inset-x-0 bottom-0 bg-ink/85 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white">
+            Habis
           </span>
         ) : lowStock ? (
-          <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-coral py-1.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-white">
-            Only {stock} left
+          <span className="absolute inset-x-0 bottom-0 bg-coral py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white">
+            Sisa {stock}
           </span>
         ) : null}
       </Link>
 
-      <div className="flex flex-1 flex-col p-2.5 sm:p-4">
-        <div className="flex items-center justify-between gap-2 text-[10px] text-muted sm:text-[11px]">
-          <span className="truncate font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-violet-dark sm:text-[10px]">
-            {product.brand?.name ?? product.category?.name ?? "COMPUTECH"}
-          </span>
-          <span className="hidden shrink-0 font-mono text-[10px] text-muted/70 sm:inline">{product.sku}</span>
-        </div>
-
-        <Link href={`/products/${product.slug}`} className="mt-1 block sm:mt-1.5">
+      <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+        <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-violet-dark">
+          {product.brand?.name ?? product.category?.name ?? "COMPUTECH"}
+        </span>
+        <Link href={`/products/${product.slug}`} className="mt-0.5 block">
           <h3
             className={cn(
-              "line-clamp-2 font-display text-[13px] font-black uppercase leading-tight tracking-[-0.02em] text-ink transition-colors group-hover:text-violet-dark sm:text-[15px]",
-              compact && "sm:text-sm",
+              "line-clamp-2 text-[12px] font-semibold leading-snug text-ink transition-colors group-hover:text-violet-dark sm:text-[13px]",
+              compact && "sm:text-[12px]",
             )}
           >
             {product.name}
@@ -129,39 +116,39 @@ export function ProductCard({
         </Link>
 
         {!compact && product.short_description ? (
-          <p className="mt-1.5 hidden line-clamp-2 text-[12px] leading-relaxed text-muted sm:block">
+          <p className="mt-1 hidden line-clamp-1 text-[11px] text-muted sm:block">
             {product.short_description}
           </p>
         ) : null}
 
-        <div className="mt-1.5 flex items-center gap-1.5 sm:mt-2 sm:gap-2">
-          <Rating value={product.rating} count={product.review_count} />
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <Rating value={product.rating} count={product.review_count} className="[&_svg]:size-3" />
           {product.sold_count > 0 ? (
-            <span className="text-[10px] text-muted sm:text-[11px]">
+            <span className="text-[10px] text-muted">
               {product.sold_count >= 1000
                 ? `${(product.sold_count / 1000).toFixed(1)}k`
                 : product.sold_count}{" "}
-              sold
+              terjual
             </span>
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-2 border-t border-ink pt-2 sm:border-t-2 sm:pt-3">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div className="min-w-0">
-            <Price value={price} compareAt={price < product.price ? product.price : null} size="md" />
-            {product.warranty_months > 0 ? (
-              <p className="mt-0.5 hidden text-[10px] text-muted sm:block">
-                {product.warranty_months}-month {product.warranty_type} warranty
-              </p>
-            ) : null}
+            <Price
+              value={price}
+              compareAt={price < product.price ? product.price : null}
+              size="md"
+              className="[&>span:first-child]:!text-coral [&>span:last-child]:text-[10px]"
+            />
           </div>
           <AddToCartButton
             productId={product.id}
             iconOnly
-            size="icon"
+            size="icon-sm"
             label="Add to cart"
             outOfStock={!available}
-            className="size-9 rounded-lg border bg-acid shadow-[2px_2px_0_0_#111126] transition-transform hover:-translate-y-0.5 hover:translate-x-0.5 sm:size-10 sm:rounded-xl sm:border-2 sm:shadow-[3px_3px_0_0_#111126]"
+            className="size-8 shrink-0 rounded-full bg-violet text-white shadow-sm hover:bg-violet-dark"
           />
         </div>
       </div>

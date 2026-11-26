@@ -159,7 +159,7 @@ export function CompareClient() {
       {compatibility ? (
         <div
           className={cn(
-            "rounded-2xl border-2 border-ink p-4 shadow-[4px_4px_0_0_#111126]",
+            "rounded-xl border border-line p-4",
             compatibility.status === "compatible"
               ? "bg-[#e9f9ef]"
               : compatibility.status === "warning"
@@ -199,7 +199,7 @@ export function CompareClient() {
                       ? "coral"
                       : "neutral") as BadgeTone
               }
-              className="border-ink font-black uppercase tracking-[0.1em]"
+              className="border-transparent font-bold uppercase tracking-[0.08em]"
             >
               {compatibility.status === "compatible"
                 ? "Compatible"
@@ -242,12 +242,12 @@ export function CompareClient() {
           </Link>
         </div>
       ) : (
-        <div className="rounded-2xl border-2 border-dashed border-line bg-mist/60 px-4 py-3 text-[12px] text-muted">
+        <div className="rounded-xl border border-dashed border-line bg-mist/60 px-4 py-3 text-[12px] text-muted">
           Compatibility verdict appears when you compare at least two PC components.
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+      <div className="overflow-x-auto rounded-xl border border-line bg-white">
         <table className="w-full min-w-[720px] border-collapse text-left text-sm">
           <thead>
             <tr>
