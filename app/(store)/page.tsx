@@ -105,22 +105,19 @@ export default async function HomePage() {
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href="/products"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className:
-                      "border-white/30 bg-white text-violet-dark hover:bg-violet-soft",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "border-white/30 bg-white text-violet-dark hover:bg-violet-soft",
+                  )}
                 >
                   Belanja sekarang <ArrowRight />
                 </Link>
                 <Link
                   href="/pc-builder"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/40 bg-transparent text-white hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/40 bg-transparent text-white hover:border-white/70 hover:bg-white/10",
+                  )}
                 >
                   <Cpu /> PC Builder
                 </Link>
@@ -358,17 +355,19 @@ export default async function HomePage() {
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href="/pc-builder"
-                  className={buttonVariants({ size: "sm", className: "bg-acid text-ink hover:bg-[#cbf02f]" })}
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "bg-acid text-ink hover:bg-[#cbf02f]",
+                  )}
                 >
                   Mulai build <ArrowRight />
                 </Link>
                 <Link
                   href="/compare"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/25 bg-transparent text-white hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/25 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
+                  )}
                 >
                   Bandingkan produk
                 </Link>
