@@ -12,6 +12,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: Me
   { path: "", priority: 1, changeFrequency: "daily" },
   { path: "/products", priority: 0.9, changeFrequency: "daily" },
   { path: "/pc-builder", priority: 0.9, changeFrequency: "weekly" },
+  { path: "/pc-components", priority: 0.9, changeFrequency: "daily" },
   { path: "/laptops", priority: 0.8, changeFrequency: "daily" },
   { path: "/networking", priority: 0.8, changeFrequency: "daily" },
   { path: "/categories", priority: 0.7, changeFrequency: "weekly" },

@@ -12,6 +12,7 @@ const shopLinks = [
   { label: "All products", href: "/products" },
   { label: "Laptops", href: "/laptops" },
   { label: "PC Builder", href: "/pc-builder" },
+  { label: "PC Components", href: "/pc-components" },
   { label: "Networking", href: "/networking" },
   { label: "Promotions", href: "/promotions" },
   { label: "Compare", href: "/compare" },

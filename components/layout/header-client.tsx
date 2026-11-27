@@ -140,6 +140,9 @@ export function HeaderClient({
     if (href === "/pc-builder") {
       return pathname.startsWith("/builds/") || pathname.startsWith("/account/builds");
     }
+    if (href === "/pc-components") {
+      return pathname.startsWith("/categories/pc-components");
+    }
     if (href === "/cart") return pathname.startsWith("/checkout");
     return false;
   }
@@ -466,6 +469,9 @@ export function HeaderClient({
 
               <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Alat & bantuan</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
+                <Link href="/pc-components" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  PC Components
+                </Link>
                 <Link href="/pc-builder" className={buttonVariants({ variant: "outline", size: "sm" })}>
                   PC Builder
                 </Link>

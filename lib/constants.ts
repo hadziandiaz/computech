@@ -10,6 +10,7 @@ export const siteConfig = {
 export const publicNav = [
   { label: "Products", href: "/products" },
   { label: "PC Builder", href: "/pc-builder" },
+  { label: "PC Components", href: "/pc-components" },
   { label: "Networking", href: "/networking" },
   { label: "Laptops", href: "/laptops" },
   { label: "Promotions", href: "/promotions" },

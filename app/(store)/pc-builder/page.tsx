@@ -62,8 +62,8 @@ export default async function PcBuilderPage({
         crumbs={[{ label: "PC Builder" }]}
         actions={
           <>
-            <Link href="/products" className={cn(buttonVariants({ variant: "primary", size: "lg" }))}>
-              Browse all parts <ArrowRight />
+            <Link href="/pc-components" className={cn(buttonVariants({ variant: "primary", size: "lg" }))}>
+              Browse PC components <ArrowRight />
             </Link>
             <Link
               href="/compare"
