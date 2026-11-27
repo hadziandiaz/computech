@@ -403,6 +403,33 @@ create table if not exists public.shipping_methods (
   updated_at timestamptz not null default now()
 );
 
+-- Example zone-based shipping rates. A zone matches when any of its lowercase
+-- tokens appears in the destination province / city / district. A zone with
+-- no tokens is the catch-all fallback, so every destination gets a quote.
+create table if not exists public.shipping_zones (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  name text not null,
+  description text,
+  matchers text[] not null default '{}',
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.shipping_zone_rates (
+  id uuid primary key default gen_random_uuid(),
+  zone_id uuid not null references public.shipping_zones (id) on delete cascade,
+  method_id uuid not null references public.shipping_methods (id) on delete cascade,
+  cost integer not null default 0 check (cost >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (zone_id, method_id)
+);
+
+create index if not exists shipping_zone_rates_zone_idx on public.shipping_zone_rates (zone_id);
+
 -- ---------------------------------------------------------------------
 -- Transactions
 -- ---------------------------------------------------------------------
@@ -422,6 +449,8 @@ create table if not exists public.orders (
   customer_email text not null,
   customer_phone text not null,
   shipping_address jsonb not null,
+  shipping_zone_name text,
+  shipping_zone_code text,
   notes text,
   cancelled_reason text,
   created_at timestamptz not null default now(),
@@ -610,8 +639,8 @@ begin
   foreach t in array array[
     'profiles','user_roles','categories','brands','products','product_inventory',
     'pc_component_specs','pc_builds','wishlists','carts','cart_items','addresses',
-    'promotions','vouchers','shipping_methods','orders','payments','shipments',
-    'product_reviews','support_messages'
+    'promotions','vouchers','shipping_methods','shipping_zones','shipping_zone_rates',
+    'orders','payments','shipments','product_reviews','support_messages'
   ]
   loop
     execute format('drop trigger if exists set_updated_at on public.%I', t);
@@ -869,6 +898,89 @@ as $$
     upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 5));
 $$;
 
+-- Resolve the example shipping zone from a checkout address snapshot.
+create or replace function public.resolve_shipping_zone(p_address jsonb)
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_haystack text;
+  v_zone_id uuid;
+begin
+  v_haystack := lower(concat_ws(
+    ' ',
+    coalesce(p_address ->> 'province', ''),
+    coalesce(p_address ->> 'city', ''),
+    coalesce(p_address ->> 'district', '')
+  ));
+
+  select z.id into v_zone_id
+  from public.shipping_zones z
+  where z.is_active
+    and (
+      cardinality(z.matchers) = 0
+      or exists (
+        select 1 from unnest(z.matchers) as token
+        where position(lower(token) in v_haystack) > 0
+      )
+    )
+  order by case when cardinality(z.matchers) = 0 then 1 else 0 end, z.sort_order
+  limit 1;
+
+  return v_zone_id;
+end;
+$$;
+
+-- Authoritative quotes shared by the checkout preview and place_order().
+create or replace function public.shipping_quotes(p_address jsonb)
+returns table (
+  method_id uuid,
+  cost integer,
+  zone_id uuid,
+  zone_code text,
+  zone_name text
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_zone_id uuid;
+  v_zone_code text;
+  v_zone_name text;
+  v_method record;
+  v_cost integer;
+begin
+  v_zone_id := public.resolve_shipping_zone(p_address);
+  if v_zone_id is not null then
+    select code, name into v_zone_code, v_zone_name
+    from public.shipping_zones where id = v_zone_id;
+  end if;
+
+  for v_method in
+    select * from public.shipping_methods where is_active order by sort_order
+  loop
+    v_cost := v_method.cost;
+    if v_zone_id is not null then
+      select coalesce(max(r.cost), v_method.cost) into v_cost
+      from public.shipping_zone_rates r
+      where r.zone_id = v_zone_id and r.method_id = v_method.id;
+    end if;
+
+    method_id := v_method.id;
+    cost := greatest(coalesce(v_cost, v_method.cost, 0), 0);
+    zone_id := v_zone_id;
+    zone_code := v_zone_code;
+    zone_name := v_zone_name;
+    return next;
+  end loop;
+end;
+$$;
+
 create or replace function public.place_order(
   p_shipping_address jsonb,
   p_shipping_method_id uuid,
@@ -901,6 +1013,10 @@ declare
   v_stock integer;
   v_free_shipping boolean := false;
   v_free_shipping_min integer := 0;
+  v_zone_id uuid;
+  v_zone_code text;
+  v_zone_name text;
+  v_zone_cost integer;
   v_email text;
   v_profile public.profiles%rowtype;
   v_primary_image text;
@@ -996,14 +1112,26 @@ begin
     v_free_shipping := true;
   end if;
 
-  v_shipping_cost := case when v_free_shipping then 0 else v_ship.cost end;
+  -- Zone rates are authoritative here, so a shopper cannot pick a cheaper
+  -- zone than the address actually resolves to at checkout.
+  v_zone_id := public.resolve_shipping_zone(p_shipping_address);
+  if v_zone_id is not null then
+    select code, name into v_zone_code, v_zone_name
+    from public.shipping_zones where id = v_zone_id;
+    select coalesce(max(r.cost), v_ship.cost) into v_zone_cost
+    from public.shipping_zone_rates r
+    where r.zone_id = v_zone_id and r.method_id = v_ship.id;
+  end if;
+  v_zone_cost := coalesce(v_zone_cost, v_ship.cost);
+
+  v_shipping_cost := case when v_free_shipping then 0 else greatest(v_zone_cost, 0) end;
   v_total := greatest(v_subtotal - v_discount + v_shipping_cost, 0);
   v_order_number := public.generate_order_number();
 
   insert into public.orders (
     order_number, user_id, status, subtotal, discount, shipping_cost, total,
     voucher_id, voucher_code, customer_name, customer_email, customer_phone,
-    shipping_address, notes
+    shipping_address, shipping_zone_name, shipping_zone_code, notes
   ) values (
     v_order_number, v_user, 'pending', v_subtotal, v_discount, v_shipping_cost, v_total,
     case when v_voucher_valid then v_voucher_id else null end,
@@ -1011,7 +1139,7 @@ begin
     coalesce(nullif(trim(v_profile.full_name), ''), v_address_name),
     coalesce(v_profile.email, v_email, ''),
     coalesce(nullif(trim(v_profile.phone), ''), v_address_phone),
-    p_shipping_address,
+    p_shipping_address, v_zone_name, v_zone_code,
     nullif(trim(p_notes), '')
   ) returning id into v_order_id;
 
@@ -1105,6 +1233,8 @@ begin
     'discount', v_discount,
     'shipping_cost', v_shipping_cost,
     'total', v_total,
+    'shipping_zone_code', v_zone_code,
+    'shipping_zone_name', v_zone_name,
     'payment_provider', coalesce(nullif(p_payment_provider, ''), 'manual')
   );
 end;
@@ -1112,6 +1242,11 @@ $$;
 
 revoke all on function public.place_order(jsonb, uuid, text, text, text, text) from public, anon;
 grant execute on function public.place_order(jsonb, uuid, text, text, text, text) to authenticated;
+
+revoke all on function public.resolve_shipping_zone(jsonb) from public;
+grant execute on function public.resolve_shipping_zone(jsonb) to anon, authenticated;
+revoke all on function public.shipping_quotes(jsonb) from public;
+grant execute on function public.shipping_quotes(jsonb) to anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Order lifecycle RPCs
@@ -1562,6 +1697,20 @@ create policy shipping_methods_public_read on public.shipping_methods for select
   using (is_active or public.is_staff());
 drop policy if exists shipping_methods_staff_all on public.shipping_methods;
 create policy shipping_methods_staff_all on public.shipping_methods for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+drop policy if exists shipping_zones_public_read on public.shipping_zones;
+create policy shipping_zones_public_read on public.shipping_zones for select to anon, authenticated
+  using (is_active or public.is_staff());
+drop policy if exists shipping_zones_staff_all on public.shipping_zones;
+create policy shipping_zones_staff_all on public.shipping_zones for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+drop policy if exists shipping_zone_rates_public_read on public.shipping_zone_rates;
+create policy shipping_zone_rates_public_read on public.shipping_zone_rates for select to anon, authenticated
+  using (true);
+drop policy if exists shipping_zone_rates_staff_all on public.shipping_zone_rates;
+create policy shipping_zone_rates_staff_all on public.shipping_zone_rates for all to authenticated
   using (public.is_staff()) with check (public.is_staff());
 
 -- Orders are inserted only through place_order().

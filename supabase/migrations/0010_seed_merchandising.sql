@@ -93,6 +93,42 @@ insert into public.shipping_methods (id, name, courier, description, cost, estim
 ('50000000-0000-4000-8000-000000000006', 'Same-Day Courier', 'COMPUTECH', 'Local same-day delivery in supported service areas. Confirm availability before ordering.', 45000, 'Same day', false, 6)
 on conflict (id) do nothing;
 
+-- Example ongkir zones. Matchers are lowercase tokens checked against the
+-- destination province / city / district. The empty-token zone is the
+-- catch-all fallback. All values are examples and editable in Admin → Settings.
+insert into public.shipping_zones (id, code, name, description, matchers, is_active, sort_order) values
+('70000000-0000-4000-8000-000000000001', 'jabodetabek', 'Jabodetabek',
+  'Jakarta, Bogor, Depok, Tangerang and South Tangerang.',
+  array['dki jakarta','jakarta','bogor','depok','tangerang','tangsel'], true, 1),
+('70000000-0000-4000-8000-000000000002', 'jawa', 'Jawa (luar Jabodetabek)',
+  'Other destinations across Java.',
+  array['jawa barat','jawa tengah','jawa timur','yogyakarta','jawa'], true, 2),
+('70000000-0000-4000-8000-000000000003', 'luar_jawa', 'Luar Jawa',
+  'All destinations outside Java. Also used when no token matches.',
+  array[]::text[], true, 3)
+on conflict (id) do nothing;
+
+insert into public.shipping_zone_rates (zone_id, method_id, cost) values
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 12000),
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000002', 25000),
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000003', 11000),
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000004', 10000),
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000005', 13000),
+('70000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000006', 25000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000001', 20000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000002', 35000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000003', 19000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000004', 17000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000005', 21000),
+('70000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000006', 40000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000001', 32000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000002', 48000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000003', 30000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000004', 28000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000005', 33000),
+('70000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000006', 52000)
+on conflict (zone_id, method_id) do update set cost = excluded.cost, updated_at = now();
+
 insert into public.site_settings (key, value) values
 ('store_name', 'COMPUTECH'),
 ('store_tagline', 'Build Your Setup. Define Your Performance.'),
@@ -103,7 +139,13 @@ insert into public.site_settings (key, value) values
 ('announcement_text', 'Demo storefront: catalog and stock data are seeded examples. Configure credentials and contact details before going live.'),
 ('announcement_link', '/about'),
 ('free_shipping_min', '500000'),
-('bank_transfer_instructions', 'Transfer the exact order total to the store account shown on your order page. Include your order number in the transfer description. Your order is marked paid after staff verification.')
+('bank_transfer_instructions', 'Transfer ke rekening contoh di bawah ini. Gunakan kode unik pada nominal transfer agar pembayaran mudah dicocokkan. Pembayaran dikonfirmasi oleh staf setelah dana diterima.'),
+('bank_name', 'Bank Contoh'),
+('bank_account_name', 'COMPUTECH Demo'),
+('bank_account_number', '1234567890'),
+('qris_merchant_name', 'COMPUTECH Demo'),
+('qris_string', '00020101021126610014ID.CO.QRIS.WWW0215ID1024000000000000000000000000000520301620302ID5912COMPUTECHDEMO6007Jakarta6304ABCD'),
+('cod_instructions', 'Bayar tunai kepada kurir saat paket diterima. Periksa barang sebelum membayar dan simpan bukti pembayaran.')
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
 insert into public.product_reviews (

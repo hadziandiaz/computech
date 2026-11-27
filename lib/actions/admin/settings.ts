@@ -17,6 +17,12 @@ const SETTING_KEYS = [
   "announcement_link",
   "free_shipping_min",
   "bank_transfer_instructions",
+  "bank_name",
+  "bank_account_name",
+  "bank_account_number",
+  "qris_merchant_name",
+  "qris_string",
+  "cod_instructions",
 ] as const;
 
 export async function saveSiteSettingsAction(

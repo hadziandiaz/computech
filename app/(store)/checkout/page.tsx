@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { getCartSummary } from "@/lib/cart/service";
 import { getAddresses } from "@/lib/data/addresses";
 import { getActivePromotions } from "@/lib/data/promotions";
-import { getShippingMethods } from "@/lib/data/shipping";
+import { getShippingMethods, quoteShipping } from "@/lib/data/shipping";
 import { getSiteSettings } from "@/lib/data/settings";
 import { paymentConfig } from "@/lib/env";
 import { freeShippingApplies } from "@/lib/pricing";
@@ -28,6 +28,12 @@ export default async function CheckoutPage() {
     getSiteSettings(),
     getActivePromotions(),
   ]);
+
+  const defaultAddress =
+    addresses.find((address) => address.is_default) ?? addresses[0] ?? null;
+  const initialQuotes = defaultAddress
+    ? await quoteShipping(defaultAddress)
+    : [];
 
   return (
     <>
@@ -60,7 +66,8 @@ export default async function CheckoutPage() {
             defaultName={user.profile?.full_name || user.email.split("@")[0] || ""}
             defaultPhone={user.profile?.phone || ""}
             paymentProvider={paymentConfig.provider}
-            bankInstructions={settings.bank_transfer_instructions}
+            settings={settings}
+            initialQuotes={initialQuotes}
             freeShippingEligible={freeShippingApplies(
               summary.subtotal,
               promotions,

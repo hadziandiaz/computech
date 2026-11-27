@@ -3,6 +3,7 @@ import {
   Banknote,
   CheckCircle2,
   CreditCard,
+  FileText,
   MapPin,
   Package,
   RotateCcw,
@@ -90,6 +91,13 @@ export default async function AdminOrderDetailPage({
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Customer view
+            </Link>
+            <Link
+              href={`/admin/orders/${order.id}/invoice`}
+              target="_blank"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <FileText /> Invoice
             </Link>
             {payment && payment.status !== "paid" && payment.status !== "refunded" ? (
               <InlineButton

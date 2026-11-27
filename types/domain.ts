@@ -333,8 +333,27 @@ export interface Payment {
   payment_url: string | null;
   paid_at: string | null;
   expires_at: string | null;
+  raw_response: PaymentInstruction | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Snapshot stored on payments.raw_response so later settings edits cannot
+ * change the instructions shown for an existing order. */
+export interface PaymentInstruction {
+  kind: "bank_transfer" | "qris" | "cod" | "gateway";
+  instructions: string;
+  uniqueCode?: number;
+  amountDue?: number;
+  bank?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+  };
+  qris?: {
+    merchantName: string;
+    value: string;
+  };
 }
 
 export interface Shipment {
@@ -364,6 +383,8 @@ export interface Order {
   customer_email: string;
   customer_phone: string;
   shipping_address: ShippingAddressSnapshot;
+  shipping_zone_name: string | null;
+  shipping_zone_code: string | null;
   notes: string | null;
   cancelled_reason: string | null;
   created_at: string;
@@ -394,6 +415,31 @@ export interface ShippingMethod {
   estimated_days: string;
   is_active: boolean;
   sort_order: number;
+}
+
+export interface ShippingZone {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  matchers: string[];
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface ShippingZoneRate {
+  id: string;
+  zone_id: string;
+  method_id: string;
+  cost: number;
+}
+
+export interface ShippingQuote {
+  method_id: string;
+  cost: number;
+  zone_id: string | null;
+  zone_code: string | null;
+  zone_name: string | null;
 }
 
 export interface ProductReview {
@@ -513,6 +559,12 @@ export interface SiteSettings {
   announcement_link: string;
   free_shipping_min: number;
   bank_transfer_instructions: string;
+  bank_name: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  qris_merchant_name: string;
+  qris_string: string;
+  cod_instructions: string;
 }
 
 export interface AdminStats {

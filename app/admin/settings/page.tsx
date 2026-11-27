@@ -1,6 +1,7 @@
 import {
   CreditCard,
   ExternalLink,
+  Globe2,
   Plus,
   Save,
   Store,
@@ -14,15 +15,25 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/input";
 import {
   deleteShippingMethodAction,
+  deleteShippingZoneAction,
   saveShippingMethodAction,
+  saveShippingZoneAction,
 } from "@/lib/actions/admin/merchandising";
 import { saveSiteSettingsAction } from "@/lib/actions/admin/settings";
 import { getAuthUser } from "@/lib/auth";
-import { getShippingMethods } from "@/lib/data/shipping";
+import {
+  getShippingMethods,
+  getShippingZoneRates,
+  getShippingZones,
+} from "@/lib/data/shipping";
 import { getSiteSettings } from "@/lib/data/settings";
 import { paymentConfig, shippingConfig, isServiceRoleConfigured } from "@/lib/env";
 import { formatIDR } from "@/lib/format";
-import type { ShippingMethod } from "@/types/domain";
+import type {
+  ShippingMethod,
+  ShippingZone,
+  ShippingZoneRate,
+} from "@/types/domain";
 
 export const metadata = {
   title: "Store settings",
@@ -79,10 +90,95 @@ function ShippingFields({ method }: { method?: ShippingMethod }) {
   );
 }
 
+function ZoneFields({
+  zone,
+  methods,
+  rates,
+}: {
+  zone?: ShippingZone;
+  methods: ShippingMethod[];
+  rates: ShippingZoneRate[];
+}) {
+  const key = zone?.id ?? "new";
+  const rateFor = (methodId: string) =>
+    rates.find((rate) => rate.method_id === methodId && rate.zone_id === zone?.id)?.cost;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Nama zona" htmlFor={`zone-name-${key}`} required>
+          <Input id={`zone-name-${key}`} name="name" defaultValue={zone?.name} required />
+        </Field>
+        <Field label="Kode zona" htmlFor={`zone-code-${key}`} required>
+          <Input
+            id={`zone-code-${key}`}
+            name="code"
+            defaultValue={zone?.code}
+            placeholder="jabodetabek"
+            required
+          />
+        </Field>
+        <Field
+          label="Kata kunci wilayah"
+          htmlFor={`zone-matchers-${key}`}
+          className="sm:col-span-2"
+          hint="Pisahkan dengan koma. Dicek terhadap provinsi, kota, dan kecamatan. Kosongkan untuk zona cadangan (fallback)."
+        >
+          <Input
+            id={`zone-matchers-${key}`}
+            name="matchers"
+            defaultValue={zone?.matchers.join(", ") ?? ""}
+            placeholder="dki jakarta, jakarta, bogor, depok, tangerang"
+          />
+        </Field>
+        <Field label="Urutan" htmlFor={`zone-sort-${key}`}>
+          <Input
+            id={`zone-sort-${key}`}
+            name="sort_order"
+            type="number"
+            min={0}
+            defaultValue={zone?.sort_order ?? 0}
+          />
+        </Field>
+        <Field label="Deskripsi" htmlFor={`zone-description-${key}`}>
+          <Input
+            id={`zone-description-${key}`}
+            name="description"
+            defaultValue={zone?.description ?? ""}
+          />
+        </Field>
+      </div>
+      <div className="rounded-xl border border-line bg-white p-3">
+        <p className="text-[11px] font-semibold">Tarif per metode pengiriman (IDR)</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {methods.map((method) => (
+            <Field key={method.id} label={method.name} htmlFor={`rate-${key}-${method.id}`}>
+              <Input
+                id={`rate-${key}-${method.id}`}
+                name={`rate_${method.id}`}
+                type="number"
+                min={0}
+                step={1000}
+                defaultValue={rateFor(method.id) ?? method.cost}
+              />
+            </Field>
+          ))}
+        </div>
+      </div>
+      <label className="flex items-center gap-2 text-[12px]">
+        <Checkbox name="is_active" defaultChecked={zone?.is_active ?? true} />
+        Zona aktif
+      </label>
+    </div>
+  );
+}
+
 export default async function AdminSettingsPage() {
-  const [settings, methods, user] = await Promise.all([
+  const [settings, methods, zones, rates, user] = await Promise.all([
     getSiteSettings(),
     getShippingMethods(false),
+    getShippingZones(false),
+    getShippingZoneRates(),
     getAuthUser(),
   ]);
 
@@ -166,6 +262,49 @@ export default async function AdminSettingsPage() {
                     defaultValue={settings.bank_transfer_instructions}
                   />
                 </Field>
+                <Field label="Nama bank" htmlFor="bank_name">
+                  <Input id="bank_name" name="bank_name" defaultValue={settings.bank_name} />
+                </Field>
+                <Field label="Nomor rekening (contoh)" htmlFor="bank_account_number">
+                  <Input
+                    id="bank_account_number"
+                    name="bank_account_number"
+                    defaultValue={settings.bank_account_number}
+                  />
+                </Field>
+                <Field label="Atas nama rekening" htmlFor="bank_account_name" className="sm:col-span-2">
+                  <Input
+                    id="bank_account_name"
+                    name="bank_account_name"
+                    defaultValue={settings.bank_account_name}
+                  />
+                </Field>
+                <Field label="Nama merchant QRIS" htmlFor="qris_merchant_name">
+                  <Input
+                    id="qris_merchant_name"
+                    name="qris_merchant_name"
+                    defaultValue={settings.qris_merchant_name}
+                  />
+                </Field>
+                <Field
+                  label="String QRIS (contoh)"
+                  htmlFor="qris_string"
+                  hint="Isi dengan string QRIS statis. Contoh ini bukan kode pembayaran sungguhan."
+                >
+                  <Input id="qris_string" name="qris_string" defaultValue={settings.qris_string} />
+                </Field>
+                <Field
+                  label="Instruksi COD"
+                  htmlFor="cod_instructions"
+                  className="sm:col-span-2"
+                >
+                  <Textarea
+                    id="cod_instructions"
+                    name="cod_instructions"
+                    rows={2}
+                    defaultValue={settings.cod_instructions}
+                  />
+                </Field>
               </div>
               <SubmitButton size="sm" pendingText="Saving…" disabled={user?.role !== "admin"}>
                 <Save /> Save settings
@@ -237,6 +376,67 @@ export default async function AdminSettingsPage() {
                   Create method
                 </SubmitButton>
               </ActionForm>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-line bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
+              <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+                <Globe2 className="size-4 text-violet" /> Zona ongkir
+              </h2>
+              <Badge tone="neutral">{zones.length}</Badge>
+            </div>
+            <div className="space-y-4 p-5">
+              <p className="text-[11px] leading-relaxed text-muted">
+                Zona dipilih berdasarkan kata kunci pada alamat. Zona tanpa kata kunci menjadi
+                cadangan untuk semua wilayah lainnya. Tarif di bawah adalah angka contoh.
+              </p>
+              {zones.map((zone) => (
+                <details key={zone.id} className="rounded-xl border border-line">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-mist/40 [&::-webkit-details-marker]:hidden">
+                    <div>
+                      <p className="text-[13px] font-semibold">{zone.name}</p>
+                      <p className="text-[10px] text-muted">
+                        {zone.code} · {zone.matchers.length ? zone.matchers.join(", ") : "fallback"}
+                      </p>
+                    </div>
+                    {!zone.is_active ? <Badge tone="warning">nonaktif</Badge> : null}
+                  </summary>
+                  <div className="border-t border-line bg-mist/20 p-4">
+                    <ActionForm action={saveShippingZoneAction} className="space-y-3">
+                      <input type="hidden" name="id" value={zone.id} />
+                      <ZoneFields zone={zone} methods={methods} rates={rates} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SubmitButton size="sm" pendingText="Saving…">
+                          Save zone
+                        </SubmitButton>
+                        <InlineButton
+                          action={deleteShippingZoneAction.bind(null, zone.id)}
+                          variant="danger-ghost"
+                          size="sm"
+                          confirm={`Delete zona ${zone.name}? Tarif zona ini juga akan dihapus.`}
+                          pendingText="Deleting…"
+                        >
+                          <Trash2 /> Delete
+                        </InlineButton>
+                      </div>
+                    </ActionForm>
+                  </div>
+                </details>
+              ))}
+              <details className="rounded-xl border border-dashed border-line">
+                <summary className="cursor-pointer list-none px-4 py-3 text-[13px] font-semibold hover:bg-mist/40 [&::-webkit-details-marker]:hidden">
+                  + Tambah zona ongkir
+                </summary>
+                <div className="border-t border-line p-4">
+                  <ActionForm action={saveShippingZoneAction} resetOnSuccess className="space-y-3">
+                    <ZoneFields methods={methods.filter((method) => method.is_active)} rates={rates} />
+                    <SubmitButton size="sm" variant="outline" pendingText="Creating…">
+                      Create zone
+                    </SubmitButton>
+                  </ActionForm>
+                </div>
+              </details>
             </div>
           </section>
         </div>

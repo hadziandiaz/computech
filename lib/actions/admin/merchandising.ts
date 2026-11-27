@@ -331,3 +331,90 @@ export async function deleteShippingMethodAction(id: string): Promise<ActionResu
   revalidatePath("/checkout");
   return ok("Shipping method deleted.");
 }
+
+function parseMatchers(raw: string): string[] {
+  return Array.from(
+    new Set(
+      raw
+        .split(/[,\n]/)
+        .map((token) => token.trim().toLocaleLowerCase("id-ID"))
+        .filter(Boolean),
+    ),
+  ).slice(0, 30);
+}
+
+export async function saveShippingZoneAction(
+  formData: FormData,
+): Promise<ActionResult<{ id: string }>> {
+  const staff = await actionStaff();
+  if (!staff) return fail("Staff access is required.", "forbidden");
+
+  const name = text(formData, "name");
+  if (name.length < 2) return fail("Enter a zone name.");
+
+  const code = slugify(text(formData, "code") || name);
+  if (!code) return fail("Enter a valid zone code.");
+
+  const payload = {
+    code,
+    name,
+    description: optionalText(formData, "description"),
+    matchers: parseMatchers(text(formData, "matchers")),
+    is_active: checkbox(formData, "is_active"),
+    sort_order: numberValue(formData, "sort_order"),
+  };
+
+  const supabase = await tryCreateSupabaseServerClient();
+  if (!supabase) return fail("Supabase is not configured.", "not_configured");
+
+  const id = text(formData, "id");
+  let zoneId = id;
+  if (id) {
+    const { error } = await supabase.from("shipping_zones").update(payload).eq("id", id);
+    if (error) return fail(error.message);
+  } else {
+    const { data, error } = await supabase
+      .from("shipping_zones")
+      .insert(payload)
+      .select("id")
+      .maybeSingle();
+    if (error || !data) return fail(error?.message ?? "Could not create the zone.");
+    zoneId = data.id;
+  }
+  if (!zoneId) return fail("Could not save the zone.");
+
+  const rates = Array.from(formData.entries())
+    .filter(
+      ([key, value]) =>
+        key.startsWith("rate_") &&
+        /^[0-9a-f-]{36}$/i.test(key.slice(5)) &&
+        typeof value === "string",
+    )
+    .map(([key, value]) => ({
+      zone_id: zoneId,
+      method_id: key.slice(5),
+      cost: Math.max(0, Math.round(Number(value) || 0)),
+    }));
+
+  await supabase.from("shipping_zone_rates").delete().eq("zone_id", zoneId);
+  if (rates.length) {
+    const { error } = await supabase.from("shipping_zone_rates").insert(rates);
+    if (error) return fail(error.message);
+  }
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/checkout");
+  return ok(id ? "Shipping zone updated." : "Shipping zone created.", { id: zoneId });
+}
+
+export async function deleteShippingZoneAction(id: string): Promise<ActionResult> {
+  const staff = await actionStaff();
+  if (!staff) return fail("Staff access is required.", "forbidden");
+  const supabase = await tryCreateSupabaseServerClient();
+  if (!supabase) return fail("Supabase is not configured.", "not_configured");
+  const { error } = await supabase.from("shipping_zones").delete().eq("id", id);
+  if (error) return fail(error.message);
+  revalidatePath("/admin/settings");
+  revalidatePath("/checkout");
+  return ok("Shipping zone deleted. Existing orders keep their shipping cost.");
+}

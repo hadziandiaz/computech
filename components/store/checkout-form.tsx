@@ -7,6 +7,7 @@ import {
   CreditCard,
   Loader2,
   MapPin,
+  PackageCheck,
   QrCode,
   ShieldCheck,
   Smartphone,
@@ -15,9 +16,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { QrisCode } from "@/components/store/qris-code";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,18 +27,31 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { Price } from "@/components/ui/price";
 import {
   placeOrderAction,
+  quoteShippingAction,
   validateVoucherAction,
 } from "@/lib/actions/orders";
 import { formatIDR } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Address, CartLine, ShippingMethod } from "@/types/domain";
+import type {
+  Address,
+  CartLine,
+  ShippingMethod,
+  ShippingQuote,
+  SiteSettings,
+} from "@/types/domain";
 
 const paymentMethods = [
   {
     value: "bank_transfer",
     label: "Bank transfer",
-    description: "Transfer the exact total and include your order number.",
+    description: "Transfer to the example account. Invoice and unique code included.",
     icon: Banknote,
+  },
+  {
+    value: "cod",
+    label: "Bayar di tempat (COD)",
+    description: "Pay cash to the courier when the parcel arrives.",
+    icon: PackageCheck,
   },
   {
     value: "ewallet",
@@ -69,7 +84,8 @@ export function CheckoutForm({
   defaultName,
   defaultPhone,
   paymentProvider,
-  bankInstructions,
+  settings,
+  initialQuotes,
   freeShippingEligible,
 }: {
   addresses: Address[];
@@ -80,7 +96,8 @@ export function CheckoutForm({
   defaultName: string;
   defaultPhone: string;
   paymentProvider: string;
-  bankInstructions: string;
+  settings: SiteSettings;
+  initialQuotes: ShippingQuote[];
   freeShippingEligible: boolean;
 }) {
   const defaultAddress = addresses.find((address) => address.is_default) ?? addresses[0] ?? null;
@@ -91,10 +108,52 @@ export function CheckoutForm({
   const [voucherInput, setVoucherInput] = useState("");
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
   const [voucherPending, startVoucher] = useTransition();
+  const [quotes, setQuotes] = useState<ShippingQuote[]>(initialQuotes);
+  const [quotePending, startQuote] = useTransition();
+  const [draftAddress, setDraftAddress] = useState({
+    province: defaultAddress?.province ?? "",
+    city: defaultAddress?.city ?? "",
+    district: defaultAddress?.district ?? "",
+    postal_code: defaultAddress?.postal_code ?? "",
+  });
 
   const selectedAddress = addresses.find((address) => address.id === addressId) ?? null;
   const selectedShipping = shippingMethods.find((method) => method.id === shippingId) ?? null;
-  const shippingCost = freeShippingEligible ? 0 : (selectedShipping?.cost ?? 0);
+
+  useEffect(() => {
+    if (!useSaved || !selectedAddress) return;
+    const next = {
+      province: selectedAddress.province,
+      city: selectedAddress.city,
+      district: selectedAddress.district,
+      postal_code: selectedAddress.postal_code,
+    };
+    setDraftAddress(next);
+    startQuote(async () => {
+      const result = await quoteShippingAction(next);
+      if (result.ok && result.data) setQuotes(result.data);
+    });
+  }, [useSaved, selectedAddress]);
+
+  function refreshQuotes(address: typeof draftAddress) {
+    if (!address.province.trim() && !address.city.trim()) return;
+    startQuote(async () => {
+      const result = await quoteShippingAction(address);
+      if (result.ok && result.data) setQuotes(result.data);
+    });
+  }
+
+  function updateAddress(key: keyof typeof draftAddress, value: string) {
+    const next = { ...draftAddress, [key]: value };
+    setDraftAddress(next);
+  }
+
+  const quoteFor = (methodId: string) =>
+    quotes.find((quote) => quote.method_id === methodId);
+  const zoneName = quotes[0]?.zone_name ?? null;
+  const shippingCost = freeShippingEligible
+    ? 0
+    : (quoteFor(shippingId)?.cost ?? selectedShipping?.cost ?? 0);
   const discount = voucher?.discount ?? 0;
   const total = Math.max(0, subtotal - discount) + shippingCost;
 
@@ -252,19 +311,46 @@ export function CheckoutForm({
                 <Label htmlFor="province" required>
                   Province
                 </Label>
-                <Input id="province" name="province" autoComplete="address-level1" required />
+                <Input
+                  id="province"
+                  name="province"
+                  autoComplete="address-level1"
+                  value={draftAddress.province}
+                  onChange={(event) => updateAddress("province", event.target.value)}
+                  onBlur={() => refreshQuotes(draftAddress)}
+                  placeholder="Contoh: Jawa Barat"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="city" required>
                   City / regency
                 </Label>
-                <Input id="city" name="city" autoComplete="address-level2" required />
+                <Input
+                  id="city"
+                  name="city"
+                  autoComplete="address-level2"
+                  value={draftAddress.city}
+                  onChange={(event) => updateAddress("city", event.target.value)}
+                  onBlur={() => refreshQuotes(draftAddress)}
+                  placeholder="Contoh: Kota Bandung"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="district" required>
                   District
                 </Label>
-                <Input id="district" name="district" autoComplete="address-level3" required />
+                <Input
+                  id="district"
+                  name="district"
+                  autoComplete="address-level3"
+                  value={draftAddress.district}
+                  onChange={(event) => updateAddress("district", event.target.value)}
+                  onBlur={() => refreshQuotes(draftAddress)}
+                  placeholder="Contoh: Coblong"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="postal_code" required>
@@ -276,6 +362,8 @@ export function CheckoutForm({
                   inputMode="numeric"
                   pattern="[0-9]{4,6}"
                   autoComplete="postal-code"
+                  value={draftAddress.postal_code}
+                  onChange={(event) => updateAddress("postal_code", event.target.value)}
                   required
                 />
               </div>
@@ -307,9 +395,18 @@ export function CheckoutForm({
         </section>
 
         <section className="rounded-2xl border border-line bg-white p-5">
-          <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-            <Truck className="size-4 text-violet" /> Delivery method
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 font-display text-base font-semibold">
+              <Truck className="size-4 text-violet" /> Delivery method
+            </h2>
+            <Badge tone={zoneName ? "violet" : "neutral"}>
+              {quotePending ? "Updating rates…" : zoneName ? `Zone: ${zoneName}` : "Zone: default"}
+            </Badge>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">
+            Ongkir dihitung otomatis dari provinsi, kota, dan kecamatan tujuan. Tarif contoh dapat
+            diubah admin.
+          </p>
           {shippingMethods.length ? (
             <div className="mt-3 space-y-2">
               {shippingMethods.map((method) => {
@@ -341,8 +438,17 @@ export function CheckoutForm({
                         </span>
                       </span>
                     </span>
-                    <span className="shrink-0 text-[12px] font-semibold">
-                      {method.cost > 0 ? formatIDR(method.cost) : "Free"}
+                    <span className="shrink-0 text-right text-[12px] font-semibold">
+                      {freeShippingEligible ? (
+                        <span className="block">
+                          <s className="text-muted">{formatIDR(quoteFor(method.id)?.cost ?? method.cost)}</s>
+                          <span className="ml-1 text-[#18794e]">Free</span>
+                        </span>
+                      ) : (quoteFor(method.id)?.cost ?? 0) > 0 ? (
+                        formatIDR(quoteFor(method.id)?.cost ?? method.cost)
+                      ) : (
+                        "Free"
+                      )}
                     </span>
                   </button>
                 );
@@ -360,8 +466,8 @@ export function CheckoutForm({
             <CreditCard className="size-4 text-violet" /> Payment method
           </h2>
           <p className="mt-1 text-[11px] text-muted">
-            Provider: <span className="font-semibold text-ink">{paymentProvider}</span>. Instructions
-            are generated after the order is created.
+            Transfer, QRIS, dan COD diproses manual oleh toko. Kode unik, rekening, QRIS, dan invoice
+            tampil setelah pesanan dibuat. {paymentProvider !== "manual" ? `Provider global: ${paymentProvider}.` : ""}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {paymentMethods.map((method) => {
@@ -389,8 +495,26 @@ export function CheckoutForm({
           </div>
           <input type="hidden" name="payment_method" value={payment} />
           {payment === "bank_transfer" ? (
+            <div className="mt-3 rounded-xl bg-mist px-3 py-2.5 text-[11px] leading-relaxed text-muted">
+              <p>{settings.bank_transfer_instructions}</p>
+              <p className="mt-1.5 font-semibold text-ink">
+                {settings.bank_name} · a.n. {settings.bank_account_name} · {settings.bank_account_number}
+                <span className="ml-1 font-normal text-muted">(nomor contoh)</span>
+              </p>
+            </div>
+          ) : null}
+          {payment === "qris" ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-mist px-3 py-2.5">
+              <QrisCode value={settings.qris_string} size={92} />
+              <div className="min-w-0 text-[11px] leading-relaxed text-muted">
+                <p className="font-semibold text-ink">QRIS {settings.qris_merchant_name}</p>
+                <p>Contoh QRIS statis. Nominal dimasukkan manual saat membayar.</p>
+              </div>
+            </div>
+          ) : null}
+          {payment === "cod" ? (
             <p className="mt-3 rounded-xl bg-mist px-3 py-2 text-[11px] leading-relaxed text-muted">
-              {bankInstructions}
+              {settings.cod_instructions}
             </p>
           ) : null}
         </section>

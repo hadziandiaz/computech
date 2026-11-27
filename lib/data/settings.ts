@@ -14,7 +14,15 @@ export const defaultSiteSettings: SiteSettings = {
   announcement_link: "",
   free_shipping_min: 500000,
   bank_transfer_instructions:
-    "Transfer the exact order total and include your order number in the transfer description. Staff will verify the payment.",
+    "Transfer ke rekening contoh di bawah ini. Gunakan kode unik pada nominal transfer agar pembayaran mudah dicocokkan.",
+  bank_name: "Bank Contoh",
+  bank_account_name: "COMPUTECH Demo",
+  bank_account_number: "1234567890",
+  qris_merchant_name: "COMPUTECH Demo",
+  qris_string:
+    "00020101021126610014ID.CO.QRIS.WWW0215ID1024000000000000000000000000000520301620302ID5912COMPUTECHDEMO6007Jakarta6304ABCD",
+  cod_instructions:
+    "Bayar tunai kepada kurir saat paket diterima. Periksa barang sebelum membayar.",
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -44,5 +52,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       "bank_transfer_instructions",
       defaultSiteSettings.bank_transfer_instructions,
     ),
+    bank_name: read("bank_name", defaultSiteSettings.bank_name),
+    bank_account_name: read("bank_account_name", defaultSiteSettings.bank_account_name),
+    bank_account_number: read("bank_account_number", defaultSiteSettings.bank_account_number),
+    qris_merchant_name: read("qris_merchant_name", defaultSiteSettings.qris_merchant_name),
+    qris_string: read("qris_string", defaultSiteSettings.qris_string),
+    cod_instructions: read("cod_instructions", defaultSiteSettings.cod_instructions),
   };
 }

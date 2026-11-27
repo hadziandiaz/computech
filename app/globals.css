@@ -288,3 +288,30 @@ textarea {
 .sonner-toast {
   font-family: var(--font-sans);
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  header,
+  footer,
+  nav,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .container-page {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}

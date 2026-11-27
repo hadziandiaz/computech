@@ -4,6 +4,7 @@ import {
   Banknote,
   CheckCircle2,
   CreditCard,
+  FileText,
   MapPin,
   Package,
   RotateCcw,
@@ -16,6 +17,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductReviewForm } from "@/components/store/product-review-form";
+import { QrisCode } from "@/components/store/qris-code";
 import { Badge, statusTone } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { InlineButton } from "@/components/ui/action-form";
@@ -64,6 +66,7 @@ export default async function AccountOrderDetailPage({
   const activeIndex = STEPS.indexOf(order.status as (typeof STEPS)[number]);
   const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const payment = order.payment;
+  const detail = payment?.raw_response ?? null;
   const shipment = order.shipment;
   const address = order.shipping_address;
 
@@ -77,6 +80,13 @@ export default async function AccountOrderDetailPage({
           <ArrowLeft className="size-3.5" /> All orders
         </Link>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/account/orders/${order.id}/invoice`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+            target="_blank"
+          >
+            <FileText /> Invoice
+          </Link>
           <InlineButton
             action={reorderAction.bind(null, order.id)}
             variant="outline"
@@ -334,18 +344,56 @@ export default async function AccountOrderDetailPage({
                 ) : (
                   <div className="rounded-xl border border-line bg-mist/60 p-3 text-[11px] leading-relaxed text-muted">
                     <p className="font-semibold text-ink">
-                      {payment.method === "bank_transfer"
-                        ? "Bank transfer instructions"
-                        : "Payment instructions"}
+                      {detail?.kind === "cod"
+                        ? "Bayar di tempat (COD)"
+                        : detail?.kind === "qris"
+                          ? "Instruksi QRIS"
+                          : "Instruksi transfer bank"}
                     </p>
-                    <p className="mt-1">{settings.bank_transfer_instructions}</p>
-                    {payment.expires_at ? (
-                      <p className="mt-2">
-                        Complete payment before {formatDateTime(payment.expires_at)}.
-                      </p>
+                    <p className="mt-1 whitespace-pre-line">
+                      {detail?.instructions ?? settings.bank_transfer_instructions}
+                    </p>
+                    {detail?.bank ? (
+                      <div className="mt-2 rounded-lg border border-line bg-white p-2.5 font-semibold text-ink">
+                        {detail.bank.bankName} · a.n. {detail.bank.accountName}
+                        <br />
+                        No. rekening: <span className="font-mono">{detail.bank.accountNumber}</span>
+                        <span className="ml-1 font-normal text-muted">(nomor contoh)</span>
+                      </div>
+                    ) : null}
+                    {detail?.qris ? (
+                      <div className="mt-3 flex flex-col items-center gap-2">
+                        <QrisCode value={detail.qris.value} size={168} />
+                        <p className="font-semibold text-ink">{detail.qris.merchantName}</p>
+                        <p className="text-center text-[10px]">Contoh QRIS statis untuk demo.</p>
+                      </div>
+                    ) : null}
+                    {detail?.uniqueCode ? (
+                      <dl className="mt-2 space-y-1 border-t border-line pt-2">
+                        <div className="flex justify-between gap-3">
+                          <dt>Kode unik</dt>
+                          <dd className="font-mono font-semibold text-ink">+{detail.uniqueCode}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt>Nominal dibayar</dt>
+                          <dd className="font-semibold text-ink">
+                            {formatIDR(detail.amountDue ?? order.total)}
+                          </dd>
+                        </div>
+                      </dl>
+                    ) : null}
+                    {payment.expires_at && detail?.kind === "gateway" ? (
+                      <p className="mt-2">Complete payment before {formatDateTime(payment.expires_at)}.</p>
                     ) : null}
                   </div>
                 )}
+                <Link
+                  href={`/account/orders/${order.id}/invoice`}
+                  target="_blank"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}
+                >
+                  <FileText /> Lihat &amp; cetak invoice
+                </Link>
                 <Link
                   href="/contact"
                   className="block text-center text-[11px] font-semibold text-violet hover:underline"

@@ -14,8 +14,10 @@ import {
   text,
 } from "@/lib/actions/helpers";
 import type { ActionResult } from "@/lib/actions/types";
+import type { ShippingQuote } from "@/types/domain";
 import { getAddressById } from "@/lib/data/addresses";
-import { getShippingMethodById } from "@/lib/data/shipping";
+import { getShippingMethodById, quoteShipping } from "@/lib/data/shipping";
+import { getSiteSettings } from "@/lib/data/settings";
 import { getVoucherByCode } from "@/lib/data/vouchers";
 import { getUserOrder } from "@/lib/data/orders";
 import { paymentConfig } from "@/lib/env";
@@ -35,7 +37,7 @@ const checkoutSchema = z.object({
   notes: z.string().trim().max(300).optional().or(z.literal("")),
   shipping_method_id: z.string().uuid("Choose a shipping method."),
   voucher_code: z.string().trim().max(40).optional().or(z.literal("")),
-  payment_method: z.enum(["bank_transfer", "ewallet", "card", "qris"]),
+  payment_method: z.enum(["bank_transfer", "qris", "cod", "ewallet", "card"]),
   order_notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
@@ -87,6 +89,27 @@ export async function validateVoucherAction(
     code: trimmed,
     message: quote.message ?? "Voucher applied.",
   });
+}
+
+export async function quoteShippingAction(address: {
+  province: string;
+  city: string;
+  district: string;
+}): Promise<ActionResult<ShippingQuote[]>> {
+  const user = await actionUser();
+  if (!user) return fail("Sign in to see shipping rates.", "auth");
+
+  const parsed = z
+    .object({
+      province: z.string().trim().max(120),
+      city: z.string().trim().max(120),
+      district: z.string().trim().max(120),
+    })
+    .safeParse(address);
+  if (!parsed.success) return fail("Enter a valid delivery address.");
+
+  const quotes = await quoteShipping(parsed.data);
+  return ok("Shipping rates updated.", quotes);
 }
 
 function composeAddress(parsed: z.infer<typeof checkoutSchema>) {
@@ -163,12 +186,15 @@ export async function placeOrderAction(formData: FormData): Promise<ActionResult
   const supabase = await tryCreateSupabaseServerClient();
   if (!supabase) return fail("Supabase is not configured.", "not_configured");
 
+  const manualMethod = ["bank_transfer", "qris", "cod"].includes(
+    parsed.data.payment_method,
+  );
   const { data, error } = await supabase.rpc("place_order", {
     p_shipping_address: address,
     p_shipping_method_id: parsed.data.shipping_method_id,
     p_voucher_code: parsed.data.voucher_code || null,
     p_payment_method: parsed.data.payment_method,
-    p_payment_provider: paymentConfig.provider,
+    p_payment_provider: manualMethod ? "manual" : paymentConfig.provider,
     p_notes: parsed.data.order_notes || null,
   });
 
@@ -184,7 +210,12 @@ export async function placeOrderAction(formData: FormData): Promise<ActionResult
 
   if (order) {
     try {
-      const intent = await createPaymentIntent(order);
+      const settings = await getSiteSettings();
+      const intent = await createPaymentIntent(
+        order,
+        parsed.data.payment_method,
+        settings,
+      );
       const admin = createSupabaseAdminClient();
       await admin
         .from("payments")
@@ -193,11 +224,11 @@ export async function placeOrderAction(formData: FormData): Promise<ActionResult
           method: intent.method,
           external_id: intent.externalId,
           payment_url: intent.paymentUrl,
-          expires_at: new Date(Date.now() + 86_400_000).toISOString(),
-          raw_response: {
-            instructions: intent.instructions,
-            provider: intent.provider,
-          },
+          expires_at:
+            intent.provider === "manual"
+              ? null
+              : new Date(Date.now() + 86_400_000).toISOString(),
+          raw_response: intent.detail,
         })
         .eq("order_id", order.id);
     } catch (paymentError) {

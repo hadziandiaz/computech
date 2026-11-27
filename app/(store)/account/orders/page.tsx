@@ -1,4 +1,4 @@
-import { ArrowRight, Package, PackageSearch, RotateCcw, Wallet } from "lucide-react";
+import { ArrowRight, FileText, Package, PackageSearch, RotateCcw, Wallet } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -180,6 +180,13 @@ export default async function AccountOrdersPage({
                       className={buttonVariants({ variant: "outline", size: "sm" })}
                     >
                       View order <ArrowRight />
+                    </Link>
+                    <Link
+                      href={`/account/orders/${order.id}/invoice`}
+                      target="_blank"
+                      className={buttonVariants({ variant: "ghost", size: "sm" })}
+                    >
+                      <FileText /> Invoice
                     </Link>
                     {["completed", "delivered", "cancelled"].includes(order.status) ? (
                       <Link
