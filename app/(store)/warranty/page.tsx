@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageHero } from "@/components/layout/page-hero";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Warranty",
@@ -136,11 +137,10 @@ export default function WarrantyPage() {
                 </Link>
                 <Link
                   href="/account/orders"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
+                  )}
                 >
                   My orders
                 </Link>

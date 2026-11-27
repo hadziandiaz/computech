@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getShippingMethods } from "@/lib/data/shipping";
 import { getSiteSettings } from "@/lib/data/settings";
 import { formatIDR } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Shipping and delivery",
@@ -156,11 +157,10 @@ export default async function ShippingPage() {
                 </Link>
                 <Link
                   href="/contact"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
+                  )}
                 >
                   Delivery question
                 </Link>

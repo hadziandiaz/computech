@@ -573,7 +573,7 @@ export function CheckoutForm({
                   type="button"
                   onClick={applyVoucher}
                   disabled={voucherPending}
-                  className={buttonVariants({ variant: "outline", size: "sm", className: "h-10" })}
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-10")}
                 >
                   {voucherPending ? <Loader2 className="animate-spin" /> : "Apply"}
                 </button>

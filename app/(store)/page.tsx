@@ -115,8 +115,8 @@ export default async function HomePage() {
                 <Link
                   href="/pc-builder"
                   className={cn(
-                    buttonVariants({ variant: "ghost", size: "sm" }),
-                    "border border-white/40 bg-transparent text-white hover:border-white/70 hover:bg-white/10",
+                    buttonVariants({ variant: "primary", size: "sm" }),
+                    "border border-white/25",
                   )}
                 >
                   <Cpu /> PC Builder

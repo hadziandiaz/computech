@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageHero } from "@/components/layout/page-hero";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Frequently asked questions",
@@ -132,11 +133,10 @@ export default function FaqPage() {
             </Link>
             <Link
               href="/track-order"
-              className={buttonVariants({
-                variant: "outline",
-                size: "lg",
-                className: "border-white/20 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
-              })}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "lg" }),
+                "border border-white/20 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
+              )}
             >
               Track an order
             </Link>
@@ -201,11 +201,10 @@ export default function FaqPage() {
                 </Link>
                 <Link
                   href="/shipping"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
+                  )}
                 >
                   Shipping details
                 </Link>

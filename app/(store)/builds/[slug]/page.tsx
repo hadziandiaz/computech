@@ -20,6 +20,7 @@ import { pcComponentLabels, pcComponentOrder } from "@/lib/constants";
 import { getPublicBuild } from "@/lib/data/builds";
 import { stockOf } from "@/lib/data/mappers";
 import { formatDate, formatIDR } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import {
   buildTotal,
   checkCompatibility,
@@ -80,11 +81,10 @@ export default async function PublicBuildPage({ params }: PageProps) {
             </Link>
             <Link
               href="/products"
-              className={buttonVariants({
-                variant: "outline",
-                size: "lg",
-                className: "border-white/20 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
-              })}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "lg" }),
+                "border border-white/20 bg-transparent text-white hover:border-white/50 hover:bg-white/10",
+              )}
             >
               Browse parts
             </Link>
@@ -217,11 +217,10 @@ export default async function PublicBuildPage({ params }: PageProps) {
                 </Link>
                 <Link
                   href="/register"
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/10",
+                  )}
                 >
                   Create an account
                 </Link>
